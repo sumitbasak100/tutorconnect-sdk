@@ -2,900 +2,613 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-<meta name="mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<title>TutorConnect</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TutorConnect Session</title>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0e0f14;--surface:#16181f;--s2:#1e2028;--border:#2a2d38;
-  --accent:#6c63ff;--green:#00d2aa;--text:#e8eaf0;--muted:#6b7280;
-  --danger:#ff4d6d;--warn:#f59e0b;--hdr:48px;
-}
-html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-tap-highlight-color:transparent}
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
 
-/* ════════ LAYOUT ════════ */
-.app{display:flex;flex-direction:column;height:100vh;height:100dvh}
-.header{height:var(--hdr);min-height:var(--hdr);display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:var(--surface);border-bottom:1px solid var(--border);gap:8px;flex-shrink:0;z-index:50}
-.body{flex:1;display:flex;overflow:hidden;position:relative}
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ════════ HEADER ════════ */
-.logo{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;white-space:nowrap}
-.logo-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
-.badge{display:flex;align-items:center;gap:6px;padding:3px 10px;border-radius:20px;background:var(--s2);border:1px solid var(--border);font-size:11px;white-space:nowrap}
-.av{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
-.av.tutor{background:var(--accent)}.av.student{background:var(--green);color:#000}
-.spill{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
-.sdot{width:6px;height:6px;border-radius:50%;background:var(--muted);transition:background .3s}
-.sdot.on{background:var(--green)}.sdot.blink{background:var(--warn);animation:pulse 1s infinite}
+  :root {
+    --bg: #0e0f14;
+    --surface: #16181f;
+    --surface2: #1e2028;
+    --border: #2a2d38;
+    --accent: #6c63ff;
+    --accent2: #00d2aa;
+    --text: #e8eaf0;
+    --text-muted: #6b7280;
+    --danger: #ff4d6d;
+  }
 
-/* ════════ WHITEBOARD PANEL ════════ */
-.wb{flex:1;display:flex;flex-direction:column;background:#13141a;position:relative;min-width:0;overflow:hidden}
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
 
-/* Toolbar */
-.tb{display:flex;align-items:center;gap:4px;padding:0 10px;height:44px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-.tb::-webkit-scrollbar{display:none}
-.tbtn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:background .12s,border-color .12s;flex-shrink:0;user-select:none;-webkit-user-select:none}
-.tbtn:active,.tbtn:hover{background:var(--border)}
-.tbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
-.tbtn:disabled{opacity:.3;pointer-events:none}
-.sep{width:1px;height:22px;background:var(--border);flex-shrink:0;margin:0 2px}
-.cswatch{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0;transition:transform .12s}
-.cswatch:active{transform:scale(1.2)}.cswatch.on{border-color:#fff}
-.cswatch.dis{opacity:.3;pointer-events:none}
-.szslider{-webkit-appearance:none;width:64px;height:3px;border-radius:2px;background:var(--border);outline:none;cursor:pointer;flex-shrink:0}
-.szslider::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--accent);cursor:pointer}
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    gap: 12px;
+  }
 
-/* Page tabs */
-.pages{display:flex;align-items:center;gap:4px;padding:4px 10px;background:var(--s2);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
-.pages::-webkit-scrollbar{display:none}
-.ptab{padding:3px 10px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;background:transparent;border:1px solid var(--border);color:var(--muted);white-space:nowrap;flex-shrink:0;transition:all .12s}
-.ptab.on{background:var(--accent);border-color:var(--accent);color:#fff}
-.ptab:hover:not(.on){background:var(--border)}
-.padd{width:22px;height:22px;border-radius:6px;font-size:14px;cursor:pointer;background:transparent;border:1px solid var(--border);color:var(--muted);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .12s}
-.padd:hover{background:var(--border);color:var(--text)}
+  .logo {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 15px; font-weight: 600; letter-spacing: -0.3px;
+    flex-shrink: 0;
+  }
+  .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent2); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(1.3)} }
 
-/* Draw permission banner */
-.dbanner{padding:5px 12px;font-size:11px;text-align:center;flex-shrink:0;display:none}
-.dbanner.show{display:block}
-.dbanner.locked{background:rgba(245,158,11,.1);color:var(--warn)}
-.dbanner.open{background:rgba(0,210,170,.1);color:var(--green)}
+  .identity-chip {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px 4px 8px;
+    font-size: 12px;
+  }
+  .identity-avatar {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600;
+    color: white;
+  }
+  .role-badge {
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .6px;
+    padding: 2px 6px; border-radius: 4px;
+    background: rgba(108,99,255,.2); color: var(--accent);
+  }
+  .role-badge.student { background: rgba(0,210,170,.15); color: var(--accent2); }
 
-/* Canvas wrapper */
-.cvs-wrap{flex:1;position:relative;overflow:hidden}
-canvas#wb{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block}
-canvas#wb.draw{cursor:crosshair}
-canvas#wb.move{cursor:grab}
-canvas#wb.move:active{cursor:grabbing}
-canvas#wb.nope{cursor:not-allowed}
-canvas#wb.cross{cursor:crosshair}
+  .room-id {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--text-muted);
+    background: var(--surface2);
+    padding: 4px 10px; border-radius: 6px;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
 
-/* Draw indicator */
-.dind{position:absolute;bottom:12px;left:12px;font-size:11px;color:var(--green);background:rgba(0,210,170,.12);border:1px solid rgba(0,210,170,.25);padding:3px 10px;border-radius:20px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5}
-.dind.show{opacity:1}
+  .status-pill {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text-muted);
+    padding: 4px 10px; border-radius: 20px;
+    background: var(--surface2); border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); transition: background .3s; }
+  .status-dot.connected { background: var(--accent2); }
 
-/* Waiting overlay */
-.cover{position:absolute;inset:0;background:rgba(14,15,20,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:20;backdrop-filter:blur(6px);transition:opacity .4s}
-.cover.off{opacity:0;pointer-events:none}
-.spin{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.cov-t{font-size:13px;color:var(--muted)}.cov-n{font-size:16px;font-weight:600}
+  /* ── Main ── */
+  .main { display: flex; flex: 1; overflow: hidden; }
 
-/* Whiteboard fullscreen button */
-.wb-fs{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:7px;background:rgba(0,0,0,.5);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;z-index:6;opacity:.7;backdrop-filter:blur(4px)}
-.wb-fs:hover{opacity:1}
+  /* ── Whiteboard ── */
+  .whiteboard-panel {
+    flex: 1; display: flex; flex-direction: column;
+    background: #1a1b22; position: relative;
+  }
 
-/* ════════ VIDEO PANEL ════════ */
-.vp{width:260px;flex-shrink:0;display:flex;flex-direction:column;background:var(--surface);border-left:1px solid var(--border)}
-/* On mobile, video panel becomes a strip at the bottom */
-@media(max-width:700px){
-  .body{flex-direction:column}
-  .vp{width:100%;height:160px;flex-direction:row;border-left:none;border-top:1px solid var(--border)}
-  .vstack{flex-direction:row!important}
-  .vslot{border-bottom:none!important;border-right:1px solid var(--border)}
-  .perm-row{display:none!important}
-  .controls{padding:6px 8px!important;gap:6px!important}
-  .ctrl{width:36px!important;height:36px!important;font-size:14px!important}
-  .tb{height:40px}
-  .tbtn{width:28px;height:28px;font-size:12px}
-}
-.vstack{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.vslot{flex:1;position:relative;background:#080910;overflow:hidden;border-bottom:1px solid var(--border)}
-.vslot video{width:100%;height:100%;object-fit:cover;display:block}
-.novid{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-size:12px}
-.ava{width:44px;height:44px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:20px;border:2px solid var(--border)}
-.vlbl{position:absolute;bottom:6px;left:6px;font-size:10px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:2px 7px;border-radius:4px;pointer-events:none}
-.vfs{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:5px;background:rgba(0,0,0,.55);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;opacity:0;transition:opacity .2s;backdrop-filter:blur(4px)}
-.vslot:hover .vfs{opacity:1}
-@media(hover:none){.vfs{opacity:.7}} /* always show on touch */
+  .toolbar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .toolbar-label { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-right: 4px; }
 
-/* Draw permission toggle */
-.perm-row{padding:8px 12px;border-bottom:1px solid var(--border);display:none;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0}
-.perm-row.show{display:flex}
-.plbl{font-size:11px;color:var(--muted)}
-.tog{position:relative;width:34px;height:19px;flex-shrink:0}
-.tog input{opacity:0;width:0;height:0;position:absolute}
-.tsl{position:absolute;inset:0;background:var(--border);border-radius:19px;cursor:pointer;transition:.25s}
-.tsl::before{content:'';position:absolute;width:13px;height:13px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.25s}
-.tog input:checked+.tsl{background:var(--green)}
-.tog input:checked+.tsl::before{transform:translateX(15px)}
+  .tool-btn {
+    width: 32px; height: 32px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface2);
+    color: var(--text); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; transition: all .15s;
+  }
+  .tool-btn:hover { background: var(--border); }
+  .tool-btn.active { background: var(--accent); border-color: var(--accent); }
 
-/* Controls */
-.controls{display:flex;justify-content:center;align-items:center;gap:8px;padding:10px;border-top:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
-.ctrl{width:40px;height:40px;border-radius:50%;border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;background:var(--s2);color:var(--text);transition:transform .12s,background .12s;user-select:none}
-.ctrl:active{transform:scale(.93)}
-.ctrl.off{opacity:.4}
-.ctrl.end{background:var(--danger);color:#fff;border-color:var(--danger)}
+  .color-swatch {
+    width: 22px; height: 22px; border-radius: 50%;
+    cursor: pointer; border: 2px solid transparent;
+    transition: border-color .15s, transform .15s;
+  }
+  .color-swatch:hover { transform: scale(1.15); }
+  .color-swatch.active { border-color: var(--text); }
 
-/* ════════ TOASTS + OVERLAYS ════════ */
-.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--s2);border:1px solid var(--border);padding:7px 16px;border-radius:8px;font-size:12px;opacity:0;pointer-events:none;transition:all .25s;z-index:9000;max-width:300px;text-align:center;white-space:nowrap}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-.oscreen{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:9999;padding:24px;text-align:center}
-.oscreen.show{display:flex}
-.oico{font-size:44px}.otit{font-size:18px;font-weight:600}
-.omsg{font-size:13px;color:var(--muted);max-width:320px;line-height:1.7}
-.obtn{margin-top:6px;padding:9px 24px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:13px;font-family:inherit;font-weight:500}
+  .size-slider {
+    -webkit-appearance: none; width: 80px; height: 4px;
+    border-radius: 2px; background: var(--border); outline: none; cursor: pointer;
+  }
+  .size-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px;
+    border-radius: 50%; background: var(--accent); cursor: pointer;
+  }
 
-/* ════════ FULLSCREEN TWEAKS ════════ */
-:fullscreen .app,:fullscreen .wb,:fullscreen .vslot{background:#000}
-:-webkit-full-screen .app,:-webkit-full-screen .wb{background:#000}
+  .divider { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+
+  .clear-btn {
+    margin-left: auto; padding: 5px 12px; border-radius: 7px;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--text-muted); font-size: 12px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; transition: all .15s;
+  }
+  .clear-btn:hover { background: var(--danger); color: white; border-color: var(--danger); }
+
+  /* Who's drawing indicator */
+  .drawing-indicator {
+    position: absolute; bottom: 12px; left: 12px;
+    background: rgba(14,15,20,.85); border: 1px solid var(--border);
+    padding: 5px 12px; border-radius: 20px;
+    font-size: 12px; color: var(--text-muted);
+    backdrop-filter: blur(8px);
+    opacity: 0; transition: opacity .3s;
+    pointer-events: none; z-index: 5;
+  }
+  .drawing-indicator.visible { opacity: 1; }
+
+  canvas { flex: 1; display: block; cursor: crosshair; touch-action: none; }
+
+  /* ── Video panel ── */
+  .video-panel {
+    width: 280px; flex-shrink: 0;
+    display: flex; flex-direction: column;
+    background: var(--surface); border-left: 1px solid var(--border);
+  }
+
+  .video-stack { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .video-slot {
+    flex: 1; position: relative;
+    background: #0a0b10; overflow: hidden;
+    border-bottom: 1px solid var(--border);
+  }
+  .video-slot video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .video-label {
+    position: absolute; bottom: 8px; left: 8px;
+    font-size: 11px; font-weight: 500; color: white;
+    background: rgba(0,0,0,.55); padding: 3px 8px;
+    border-radius: 5px; backdrop-filter: blur(6px);
+    display: flex; align-items: center; gap: 5px;
+  }
+  .video-label .role-dot { width: 5px; height: 5px; border-radius: 50%; }
+
+  .no-video {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 8px;
+    color: var(--text-muted); font-size: 13px;
+  }
+  .avatar-big {
+    width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 600; color: white;
+    border: 2px solid var(--border);
+  }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex; justify-content: center; gap: 10px;
+    padding: 14px 12px; border-top: 1px solid var(--border);
+  }
+  .ctrl-btn {
+    width: 42px; height: 42px; border-radius: 50%;
+    border: 1px solid var(--border); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; transition: all .15s;
+    background: var(--surface2); color: var(--text);
+  }
+  .ctrl-btn:hover { transform: scale(1.08); }
+  .ctrl-btn.off { background: var(--surface2); color: var(--text-muted); border-color: var(--border); }
+  .ctrl-btn.end { background: var(--danger); color: white; border-color: var(--danger); }
+  .ctrl-btn.end:hover { background: #e0003d; }
+
+  /* ── Waiting overlay ── */
+  .waiting-overlay {
+    position: absolute; inset: 0;
+    background: rgba(14,15,20,.92);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 14px;
+    z-index: 10; backdrop-filter: blur(4px);
+  }
+  .waiting-overlay.hidden { display: none; }
+  .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .waiting-text { font-size: 14px; color: var(--text-muted); }
+  .waiting-sub  { font-size: 12px; color: var(--text-muted); opacity: .6; }
+  .waiting-room { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent); background: rgba(108,99,255,.1); padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(108,99,255,.3); }
+
+  /* ── Error screen ── */
+  .error-screen {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 12px;
+    z-index: 100;
+  }
+  .error-screen.hidden { display: none; }
+  .error-icon { font-size: 40px; }
+  .error-msg  { font-size: 15px; color: var(--text-muted); }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--surface2); border: 1px solid var(--border);
+    padding: 8px 18px; border-radius: 8px; font-size: 13px; color: var(--text);
+    opacity: 0; pointer-events: none; transition: all .3s; z-index: 999;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
-<div class="app">
 
-  <!-- Header -->
-  <div class="header">
-    <div class="logo"><div class="logo-dot"></div>TutorConnect</div>
-    <div class="badge"><div class="av" id="uav"></div><span id="uname">—</span></div>
-    <div class="spill"><div class="sdot" id="sdot"></div><span id="stxt">Connecting…</span></div>
+<!-- Error screen (shown if userId/name missing) -->
+<div class="error-screen hidden" id="errorScreen">
+  <div class="error-icon">🔒</div>
+  <div style="font-size:18px;font-weight:600">Access Denied</div>
+  <div class="error-msg">This session requires a valid user ID and name.</div>
+  <div class="error-msg" style="font-size:12px;opacity:.5">Add ?userId=X&name=Y to the URL</div>
+</div>
+
+<div class="header">
+  <div class="logo"><div class="logo-dot"></div>TutorConnect</div>
+  <div class="identity-chip" id="identityChip" style="display:none">
+    <div class="identity-avatar" id="myAvatar"></div>
+    <span id="myName">—</span>
+    <span class="role-badge" id="myRole">—</span>
+  </div>
+  <div class="room-id" id="roomIdLabel">Room: —</div>
+  <div class="status-pill">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">Connecting…</span>
+  </div>
+</div>
+
+<div class="main">
+  <!-- Whiteboard -->
+  <div class="whiteboard-panel">
+    <div class="toolbar">
+      <span class="toolbar-label">Board</span>
+      <div class="divider"></div>
+      <div class="color-swatch active" style="background:#ffffff" data-color="#ffffff"></div>
+      <div class="color-swatch" style="background:#6c63ff" data-color="#6c63ff"></div>
+      <div class="color-swatch" style="background:#00d2aa" data-color="#00d2aa"></div>
+      <div class="color-swatch" style="background:#ff4d6d" data-color="#ff4d6d"></div>
+      <div class="color-swatch" style="background:#ffd166" data-color="#ffd166"></div>
+      <div class="divider"></div>
+      <button class="tool-btn" id="eraserBtn" title="Eraser">⌫</button>
+      <div class="divider"></div>
+      <input type="range" class="size-slider" id="sizeSlider" min="1" max="20" value="3"/>
+      <button class="clear-btn" id="clearBtn">Clear All</button>
+    </div>
+    <canvas id="whiteboard"></canvas>
+    <div class="drawing-indicator" id="drawingIndicator">✏️ <span id="drawingName"></span> is drawing…</div>
+
+    <!-- Waiting overlay -->
+    <div class="waiting-overlay" id="waitingOverlay">
+      <div class="spinner"></div>
+      <div class="waiting-text">Waiting for the other person…</div>
+      <div class="waiting-sub" id="waitingSubText"></div>
+      <div class="waiting-room" id="overlayRoomId"></div>
+    </div>
   </div>
 
-  <div class="body">
-
-    <!-- Whiteboard -->
-    <div class="wb" id="wbPanel">
-      <!-- Toolbar -->
-      <div class="tb" id="toolbar">
-        <!-- Tools -->
-        <button class="tbtn on" id="tPen"   title="Pen">✏️</button>
-        <button class="tbtn"    id="tLine"  title="Line">╱</button>
-        <button class="tbtn"    id="tRect"  title="Rectangle">▭</button>
-        <button class="tbtn"    id="tCirc"  title="Circle">◯</button>
-        <button class="tbtn"    id="tArrow" title="Arrow">➜</button>
-        <button class="tbtn"    id="tText"  title="Text">T</button>
-        <button class="tbtn"    id="tMove"  title="Pan board">✋</button>
-        <button class="tbtn"    id="tErase" title="Eraser">⌫</button>
-        <div class="sep"></div>
-        <!-- Colors -->
-        <div class="cswatch on"  style="background:#ffffff" data-c="#ffffff"></div>
-        <div class="cswatch"     style="background:#6c63ff" data-c="#6c63ff"></div>
-        <div class="cswatch"     style="background:#00d2aa" data-c="#00d2aa"></div>
-        <div class="cswatch"     style="background:#ff4d6d" data-c="#ff4d6d"></div>
-        <div class="cswatch"     style="background:#ffd166" data-c="#ffd166"></div>
-        <div class="cswatch"     style="background:#60a5fa" data-c="#60a5fa"></div>
-        <div class="sep"></div>
-        <input type="range" class="szslider" id="szSlider" min="1" max="30" value="3" title="Size"/>
-        <div class="sep"></div>
-        <button class="tbtn" id="tUndo"  title="Undo">↩</button>
-        <button class="tbtn" id="tClear" title="Clear page">🗑</button>
-        <button class="tbtn" id="wbFsBtn" title="Fullscreen board" style="margin-left:auto">⛶</button>
+  <!-- Video -->
+  <div class="video-panel">
+    <div class="video-stack">
+      <div class="video-slot">
+        <video id="localVideo" autoplay muted playsinline></video>
+        <div class="video-label">
+          <div class="role-dot" id="localRoleDot" style="background:#6c63ff"></div>
+          <span id="localLabel">You</span>
+        </div>
       </div>
-
-      <!-- Page tabs (tutor only, shown after room-state) -->
-      <div class="pages" id="pagesBar" style="display:none">
-        <div id="pageTabs"></div>
-        <button class="padd" id="addPageBtn" title="New page">+</button>
-      </div>
-
-      <div class="dbanner" id="dbanner"></div>
-
-      <div class="cvs-wrap" id="cvsWrap">
-        <canvas id="wb"></canvas>
-        <div class="dind" id="dind"></div>
-        <div class="cover" id="cover">
-          <div class="spin"></div>
-          <div class="cov-t">Waiting for</div>
-          <div class="cov-n" id="covName">the other participant</div>
-          <div class="cov-t" id="covSub">to join…</div>
+      <div class="video-slot">
+        <div class="no-video" id="remoteNoVideo">
+          <div class="avatar-big" id="remoteAvatar" style="background:#2a2d38">👤</div>
+          <span id="remoteWaitName">Waiting…</span>
+        </div>
+        <video id="remoteVideo" autoplay playsinline style="display:none"></video>
+        <div class="video-label" id="remoteLabel" style="display:none">
+          <div class="role-dot" id="remoteRoleDot" style="background:#00d2aa"></div>
+          <span id="remoteLabelText">—</span>
         </div>
       </div>
     </div>
-
-    <!-- Video panel -->
-    <div class="vp">
-      <div class="perm-row" id="permRow">
-        <span class="plbl">✏️ Student can draw</span>
-        <label class="tog"><input type="checkbox" id="permTog"/><span class="tsl"></span></label>
-      </div>
-      <div class="vstack">
-        <div class="vslot" id="lslot">
-          <video id="lvid" autoplay muted playsinline></video>
-          <div class="vlbl" id="llbl">You</div>
-          <button class="vfs" id="lfs">⛶</button>
-        </div>
-        <div class="vslot" id="rslot">
-          <div class="novid" id="rnovid"><div class="ava">👤</div><span id="rnoname">Waiting…</span></div>
-          <video id="rvid" autoplay playsinline style="display:none"></video>
-          <div class="vlbl" id="rlbl" style="display:none">—</div>
-          <button class="vfs" id="rfs" style="display:none">⛶</button>
-        </div>
-      </div>
-      <div class="controls">
-        <button class="ctrl" id="muteBtn"  title="Mute">🎙️</button>
-        <button class="ctrl" id="camBtn"   title="Camera">📷</button>
-        <button class="ctrl end" id="endBtn" title="End">📵</button>
-      </div>
+    <div class="controls">
+      <button class="ctrl-btn" id="muteBtn" title="Mute mic">🎙️</button>
+      <button class="ctrl-btn" id="videoBtn" title="Toggle camera">📷</button>
+      <button class="ctrl-btn end" id="endBtn" title="End session">📵</button>
     </div>
+  </div>
+</div>
 
-  </div><!-- .body -->
-</div><!-- .app -->
-
-<!-- Overlays -->
-<div class="oscreen" id="errScreen"><div class="oico">🚫</div><div class="otit">Cannot join</div><div class="omsg" id="errMsg"></div></div>
-<div class="oscreen" id="endScreen"><div class="oico">✅</div><div class="otit">Session ended</div><div class="omsg" id="endMsg"></div><button class="obtn" onclick="window.close()">Close</button></div>
 <div class="toast" id="toast"></div>
 
 <script>
-// ═══════════════════════════════════════════════════════
-// IDENTITY — from URL path /session/:roomId/:userId
-// ═══════════════════════════════════════════════════════
-const parts  = location.pathname.split("/").filter(Boolean);
-const ROOM   = parts[1] || "";
-const USERID = decodeURIComponent(parts[2] || "");
-if (!ROOM || !USERID) showError("Invalid session link.");
+// ── Read identity from URL ────────────────────────────────────
+const params   = new URLSearchParams(location.search);
+const roomId   = location.pathname.split("/").pop();
+const userId   = params.get("userId");
+const userName = params.get("name");
 
-let ME = { name: "", role: "", isTutor: false }; // filled from room-state
+// Guard — must have userId + name
+if (!userId || !userName) {
+  document.getElementById("errorScreen").classList.remove("hidden");
+  throw new Error("Missing userId or name");
+}
 
-// ═══════════════════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════════════════
-let toastTmr = null;
-function showToast(msg, ms = 3000) {
+// ── Helpers ──────────────────────────────────────────────────
+function initials(name) {
+  return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+}
+function roleColor(role) {
+  return role === "tutor" ? "#6c63ff" : "#00d2aa";
+}
+function showToast(msg, duration = 2800) {
   const t = document.getElementById("toast");
-  t.textContent = msg; t.classList.add("show");
-  clearTimeout(toastTmr);
-  toastTmr = setTimeout(() => t.classList.remove("show"), ms);
-}
-function showError(msg) { document.getElementById("errMsg").textContent = msg; document.getElementById("errScreen").classList.add("show"); }
-function showEnded(msg) { document.getElementById("endMsg").textContent = msg || "Session ended."; document.getElementById("endScreen").classList.add("show"); }
-function setStatus(txt, on, blink) {
-  document.getElementById("stxt").textContent = txt;
-  document.getElementById("sdot").className = "sdot" + (on ? " on" : blink ? " blink" : "");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), duration);
 }
 
-// ═══════════════════════════════════════════════════════
-// SOCKET
-// ═══════════════════════════════════════════════════════
-const socket = io({ reconnection: true, reconnectionAttempts: 20, reconnectionDelay: 1500, reconnectionDelayMax: 8000 });
+// ── Setup UI with identity ───────────────────────────────────
+document.getElementById("roomIdLabel").textContent = `Room: ${roomId}`;
+document.getElementById("overlayRoomId").textContent = roomId;
+document.getElementById("myName").textContent = userName;
 
-socket.on("connect",          () => { setStatus("Connected", true); if (localStream) socket.emit("join-room", { roomId: ROOM, userId: USERID }); });
-socket.on("disconnect",       () => setStatus("Reconnecting…", false, true));
-socket.on("reconnect",        () => { setStatus("Connected", true); showToast("🔄 Reconnected"); });
-socket.on("reconnect_failed", () => { setStatus("Connection lost"); showToast("❌ Lost connection. Please refresh.", 8000); });
-socket.on("join-error",       ({ message }) => showError(message));
+const myAvatar = document.getElementById("myAvatar");
+myAvatar.textContent = initials(userName);
+myAvatar.style.background = "#6c63ff";
 
-// ═══════════════════════════════════════════════════════
-// ROOM STATE — server sends after join
-// ═══════════════════════════════════════════════════════
-socket.on("room-state", ({ participants, connectedUsers, drawPermission, role, name, pages, activePage }) => {
-  ME = { name, role, isTutor: role === "tutor" };
+// ── Socket + WebRTC ─────────────────────────────────────────
+const socket  = io();
+let localStream     = null;
+let peerConnection  = null;
+let isMuted         = false;
+let isVideoOff      = false;
+let remoteUserName  = null;
 
-  // Set header identity
-  document.getElementById("uav").textContent   = name.charAt(0).toUpperCase();
-  document.getElementById("uav").classList.add(ME.isTutor ? "tutor" : "student");
-  document.getElementById("uname").textContent = name;
-  document.getElementById("llbl").textContent  = name + " (You)";
+const iceConfig = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+  ],
+};
 
-  // Show draw permission toggle for tutor
-  if (ME.isTutor) {
-    document.getElementById("permRow").classList.add("show");
-    document.getElementById("pagesBar").style.display = "flex";
-    document.getElementById("permTog").checked = drawPermission;
+// ── Media ────────────────────────────────────────────────────
+async function startMedia() {
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    document.getElementById("localVideo").srcObject = localStream;
+  } catch {
+    showToast("⚠️ Camera/mic not available — audio only");
+    localStream = new MediaStream();
   }
+  // Join room with identity
+  socket.emit("join-room", { roomId, userId, name: userName });
+}
 
-  // Find the other participant
-  const other = Object.values(participants).find(p => p.userId !== USERID);
+// ── Server confirms identity ──────────────────────────────────
+socket.on("identity-confirmed", ({ role, participants }) => {
+  const chip = document.getElementById("identityChip");
+  chip.style.display = "flex";
+
+  const roleEl = document.getElementById("myRole");
+  roleEl.textContent = role;
+  if (role === "student") roleEl.classList.add("student");
+
+  myAvatar.style.background = roleColor(role);
+  document.getElementById("localRoleDot").style.background = roleColor(role);
+  document.getElementById("localLabel").textContent = `${userName} (You)`;
+
+  // Update waiting text with the other person's name
+  const other = Object.values(participants).find(p => p.userId !== userId);
   if (other) {
-    document.getElementById("covName").textContent = other.name;
-    document.getElementById("rnoname").textContent = other.name;
-    document.getElementById("rlbl").textContent    = other.name;
-  }
-
-  // Apply draw permission
-  applyDrawPerm(drawPermission);
-
-  // Replay board state from server
-  WB.loadPages(pages, activePage);
-
-  // If other person is already connected — start video offer
-  const otherOnline = (connectedUsers || []).some(u => u && u.userId !== USERID);
-  if (otherOnline) {
-    document.getElementById("covSub").textContent = "Establishing video connection…";
-    startOffer();
+    document.getElementById("waitingSubText").textContent = `Waiting for ${other.name}…`;
+    document.getElementById("remoteWaitName").textContent = other.name;
+    const ra = document.getElementById("remoteAvatar");
+    ra.textContent = initials(other.name);
+    ra.style.background = roleColor(other.role);
   }
 });
 
-// ═══════════════════════════════════════════════════════
-// MEDIA — camera + mic
-// ═══════════════════════════════════════════════════════
-let localStream = null;
-
-async function startMedia() {
-  try {
-    // Try with video first
-    localStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
-      audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 48000 },
-    });
-  } catch (e1) {
-    try {
-      // Fallback: audio only
-      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      showToast("⚠️ No camera found — audio only");
-    } catch (e2) {
-      showToast("⚠️ No camera or mic — whiteboard only");
-      localStream = new MediaStream();
-    }
-  }
-  document.getElementById("lvid").srcObject = localStream;
-  socket.emit("join-room", { roomId: ROOM, userId: USERID });
-}
-
-// ═══════════════════════════════════════════════════════
-// WEBRTC — video + audio
-// Fixes:
-//  - ICE candidate queue (applied only after remote desc set)
-//  - ICE restart on connection failure
-//  - Proper audio track constraints
-// ═══════════════════════════════════════════════════════
-let pc             = null;
-let remoteDescSet  = false;
-let iceCandQueue   = [];
-let isMuted        = false;
-let isCamOff       = false;
-let offerLock      = false; // prevent duplicate offers
-
-const ICE_CFG = {
-  iceServers: [
-    { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"] },
-  ],
-  // Enable ICE restart capability
-  iceTransportPolicy: "all",
-  bundlePolicy: "max-bundle",
-  rtcpMuxPolicy: "require",
-};
-
-function closePeer() {
-  if (pc) { try { pc.close(); } catch(_){} pc = null; }
-  remoteDescSet = false; iceCandQueue = []; offerLock = false;
-}
-
+// ── WebRTC ────────────────────────────────────────────────────
 function createPeer() {
-  closePeer();
-  pc = new RTCPeerConnection(ICE_CFG);
+  const pc = new RTCPeerConnection(iceConfig);
+  localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
 
-  // Add all tracks
-  if (localStream) localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-
-  // Remote stream arrives
-  pc.ontrack = ({ streams }) => {
-    const rvid = document.getElementById("rvid");
-    rvid.srcObject = streams[0];
-    rvid.style.display = "block";
-    document.getElementById("rnovid").style.display = "none";
-    document.getElementById("rlbl").style.display   = "block";
-    document.getElementById("rfs").style.display    = "block";
-    document.getElementById("cover").classList.add("off");
-    setStatus("Connected", true);
-    // Force play (some browsers need this)
-    rvid.play().catch(() => {});
+  pc.ontrack = (e) => {
+    const rv = document.getElementById("remoteVideo");
+    rv.srcObject = e.streams[0];
+    rv.style.display = "block";
+    document.getElementById("remoteNoVideo").style.display   = "none";
+    document.getElementById("remoteLabel").style.display     = "flex";
+    document.getElementById("remoteLabelText").textContent   = remoteUserName || "Participant";
+    document.getElementById("waitingOverlay").classList.add("hidden");
+    document.getElementById("statusDot").classList.add("connected");
+    document.getElementById("statusText").textContent = "Connected";
+    showToast(`✅ ${remoteUserName || "Other participant"} joined!`);
   };
 
-  // ICE candidates
-  pc.onicecandidate = ({ candidate }) => {
-    if (candidate) socket.emit("ice-candidate", { roomId: ROOM, candidate });
+  pc.onicecandidate = (e) => {
+    if (e.candidate) socket.emit("ice-candidate", { roomId, candidate: e.candidate });
   };
 
-  // Connection state
   pc.onconnectionstatechange = () => {
-    const s = pc.connectionState;
-    console.log("[WebRTC state]", s);
-    if (s === "connected")    setStatus("Connected", true);
-    if (s === "connecting")   setStatus("Connecting…", false, true);
-    if (s === "disconnected") {
-      setStatus("Reconnecting…", false, true);
-      // Try ICE restart after 3s
-      setTimeout(() => { if (pc && pc.connectionState === "disconnected") restartICE(); }, 3000);
-    }
-    if (s === "failed") {
-      setStatus("Reconnecting…", false, true);
-      showToast("⚠️ Video dropped — retrying…");
-      setTimeout(startOffer, 1500);
-    }
-  };
-
-  // ICE state
-  pc.oniceconnectionstatechange = () => {
-    if (pc.iceConnectionState === "failed") {
-      console.warn("[ICE] failed — restarting");
-      restartICE();
+    if (["disconnected","failed","closed"].includes(pc.connectionState)) {
+      document.getElementById("remoteVideo").style.display     = "none";
+      document.getElementById("remoteNoVideo").style.display   = "flex";
+      document.getElementById("remoteLabel").style.display     = "none";
+      document.getElementById("waitingOverlay").classList.remove("hidden");
+      document.getElementById("statusDot").classList.remove("connected");
+      document.getElementById("statusText").textContent = "Reconnecting…";
     }
   };
 
   return pc;
 }
 
-async function flushICE() {
-  const q = [...iceCandQueue]; iceCandQueue = [];
-  for (const c of q) {
-    try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch(e) { console.warn("[ICE flush]", e.message); }
-  }
-}
-
-async function startOffer() {
-  if (offerLock) return;
-  offerLock = true;
-  createPeer();
-  try {
-    const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
-    await pc.setLocalDescription(offer);
-    socket.emit("offer", { roomId: ROOM, offer });
-  } catch(e) { console.error("[startOffer]", e); offerLock = false; }
-}
-
-async function restartICE() {
-  if (!pc) return;
-  try {
-    const offer = await pc.createOffer({ iceRestart: true });
-    await pc.setLocalDescription(offer);
-    socket.emit("offer", { roomId: ROOM, offer });
-  } catch(e) { console.error("[restartICE]", e); startOffer(); }
-}
-
-socket.on("peer-joined", ({ name, role }) => {
-  document.getElementById("rlbl").textContent    = name;
-  document.getElementById("rnoname").textContent = name;
-  document.getElementById("covName").textContent = name;
-  document.getElementById("covSub").textContent  = "Establishing video connection…";
-  showToast(`👋 ${name} joined`);
-  startOffer();
+socket.on("peer-joined", async ({ userId: pid, name }) => {
+  remoteUserName = name;
+  document.getElementById("remoteLabelText").textContent = name;
+  const ra = document.getElementById("remoteAvatar");
+  ra.textContent = initials(name);
+  peerConnection = createPeer();
+  const offer = await peerConnection.createOffer();
+  await peerConnection.setLocalDescription(offer);
+  socket.emit("offer", { roomId, offer });
 });
 
 socket.on("offer", async ({ offer }) => {
-  offerLock = false;
-  createPeer();
-  try {
-    await pc.setRemoteDescription(new RTCSessionDescription(offer));
-    remoteDescSet = true;
-    await flushICE();
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-    socket.emit("answer", { roomId: ROOM, answer });
-  } catch(e) { console.error("[offer handler]", e); }
+  peerConnection = createPeer();
+  await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+  const answer = await peerConnection.createAnswer();
+  await peerConnection.setLocalDescription(answer);
+  socket.emit("answer", { roomId, answer });
 });
 
 socket.on("answer", async ({ answer }) => {
-  if (!pc) return;
-  try {
-    await pc.setRemoteDescription(new RTCSessionDescription(answer));
-    remoteDescSet = true;
-    await flushICE();
-  } catch(e) { console.error("[answer handler]", e); }
+  await peerConnection?.setRemoteDescription(new RTCSessionDescription(answer));
 });
 
 socket.on("ice-candidate", async ({ candidate }) => {
-  if (!pc) return;
-  if (!remoteDescSet) { iceCandQueue.push(candidate); return; }
-  try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch(e) { console.warn("[ICE add]", e.message); }
+  try { await peerConnection?.addIceCandidate(new RTCIceCandidate(candidate)); } catch {}
 });
-
-socket.on("ice-restart", () => { if (pc) restartICE(); });
 
 socket.on("peer-left", ({ name }) => {
-  const rvid = document.getElementById("rvid");
-  rvid.style.display = "none"; rvid.srcObject = null;
-  document.getElementById("rnovid").style.display = "flex";
-  document.getElementById("rlbl").style.display   = "none";
-  document.getElementById("rfs").style.display    = "none";
-  document.getElementById("cover").classList.remove("off");
-  document.getElementById("covSub").textContent   = "to rejoin…";
-  setStatus("Waiting…");
-  showToast(`${name} left`);
-  closePeer();
+  document.getElementById("remoteVideo").style.display     = "none";
+  document.getElementById("remoteNoVideo").style.display   = "flex";
+  document.getElementById("remoteLabel").style.display     = "none";
+  document.getElementById("waitingOverlay").classList.remove("hidden");
+  document.getElementById("statusDot").classList.remove("connected");
+  document.getElementById("statusText").textContent = "Waiting…";
+  showToast(`${name} left the session`);
 });
 
-socket.on("session-ended", ({ reason } = {}) => {
-  closePeer();
-  localStream?.getTracks().forEach(t => t.stop());
-  showEnded(reason);
+socket.on("session-ended", () => {
+  showToast("Session ended");
+  setTimeout(() => window.close(), 2000);
 });
 
-// ═══════════════════════════════════════════════════════
-// CONTROLS
-// ═══════════════════════════════════════════════════════
+socket.on("error", ({ message }) => showToast(`⚠️ ${message}`));
+
+// ── Controls ─────────────────────────────────────────────────
 document.getElementById("muteBtn").onclick = () => {
   isMuted = !isMuted;
   localStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
-  const b = document.getElementById("muteBtn");
-  b.textContent = isMuted ? "🔇" : "🎙️";
-  b.classList.toggle("off", isMuted);
+  const btn = document.getElementById("muteBtn");
+  btn.textContent = isMuted ? "🔇" : "🎙️";
+  btn.classList.toggle("off", isMuted);
 };
-document.getElementById("camBtn").onclick = () => {
-  isCamOff = !isCamOff;
-  localStream.getVideoTracks().forEach(t => t.enabled = !isCamOff);
-  const b = document.getElementById("camBtn");
-  b.textContent = isCamOff ? "🚫" : "📷";
-  b.classList.toggle("off", isCamOff);
+
+document.getElementById("videoBtn").onclick = () => {
+  isVideoOff = !isVideoOff;
+  localStream.getVideoTracks().forEach(t => t.enabled = !isVideoOff);
+  const btn = document.getElementById("videoBtn");
+  btn.textContent = isVideoOff ? "🚫" : "📷";
+  btn.classList.toggle("off", isVideoOff);
 };
+
 document.getElementById("endBtn").onclick = () => {
-  if (confirm("End this session?")) { closePeer(); localStream?.getTracks().forEach(t => t.stop()); showEnded("You ended the session."); }
+  if (confirm("End this session?")) {
+    peerConnection?.close();
+    localStream?.getTracks().forEach(t => t.stop());
+    window.close();
+  }
 };
 
-// Fullscreen
-function goFs(el) {
-  try {
-    if (!document.fullscreenElement) (el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen).call(el);
-    else (document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen).call(document);
-  } catch(e) {}
+// ── Whiteboard ────────────────────────────────────────────────
+const canvas = document.getElementById("whiteboard");
+const ctx    = canvas.getContext("2d");
+let drawing  = false, lastX = 0, lastY = 0;
+let penColor = "#ffffff", penSize = 3, isEraser = false;
+let drawTimeout = null;
+
+function resizeCanvas() {
+  const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  canvas.width  = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+  ctx.putImageData(img, 0, 0);
 }
-document.getElementById("lfs").onclick    = () => goFs(document.getElementById("lslot"));
-document.getElementById("rfs").onclick    = () => goFs(document.getElementById("rslot"));
-document.getElementById("wbFsBtn").onclick= () => goFs(document.getElementById("wbPanel"));
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
 
-// Draw permission
-document.getElementById("permTog").addEventListener("change", e => {
-  socket.emit("set-draw-permission", { roomId: ROOM, allowed: e.target.checked });
-});
-socket.on("draw-permission-changed", ({ allowed }) => {
-  applyDrawPerm(allowed);
-  if (ME.isTutor) {
-    document.getElementById("permTog").checked = allowed;
-    showToast(allowed ? "✏️ Student can draw" : "🔒 Student drawing locked");
-  } else {
-    showToast(allowed ? "✏️ You can now draw!" : "🔒 Drawing locked");
-  }
-});
-
-function applyDrawPerm(allowed) {
-  const locked = ME.isTutor ? false : !allowed;
-  document.querySelectorAll(".cswatch").forEach(e => e.classList.toggle("dis", locked));
-  ["tPen","tLine","tRect","tCirc","tArrow","tText","tErase","tUndo","tClear"].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.disabled = locked;
-  });
-  document.getElementById("szSlider").disabled = locked;
-  if (!ME.isTutor) {
-    const b = document.getElementById("dbanner");
-    b.classList.add("show");
-    b.className = "dbanner show " + (allowed ? "open" : "locked");
-    b.textContent = allowed ? "✏️ You can draw on the board" : "🔒 Drawing locked — waiting for tutor";
-  }
-  WB.setLocked(locked);
+function getPos(e) {
+  const r   = canvas.getBoundingClientRect();
+  const src = e.touches ? e.touches[0] : e;
+  return { x: src.clientX - r.left, y: src.clientY - r.top };
 }
 
-// ═══════════════════════════════════════════════════════
-// WHITEBOARD ENGINE
-// Full-featured: pen, line, rect, circle, arrow, text, pan, eraser
-// Normalized coordinates (0-1) for cross-device consistency
-// Server stores full command history → replayed on join/refresh
-// ═══════════════════════════════════════════════════════
-const WB = (() => {
-  const canvas = document.getElementById("wb");
-  const ctx    = canvas.getContext("2d");
+function drawStroke(x0, y0, x1, y1, color, size, eraser) {
+  ctx.globalCompositeOperation = eraser ? "destination-out" : "source-over";
+  ctx.strokeStyle = color;
+  ctx.lineWidth   = size;
+  ctx.lineCap = ctx.lineJoin = "round";
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+}
 
-  // State
-  let tool     = "pen"; // pen|line|rect|circ|arrow|text|move|erase
-  let color    = "#ffffff";
-  let size     = 3;
-  let locked   = false;
-  let drawing  = false;
-  let startX=0, startY=0, lastX=0, lastY=0;
-  let panOX=0, panOY=0, panStartX=0, panStartY=0; // pan offset
-  let activePage = "1";
-  const pages  = {}; // pageId → [ commands ]
-  const undoStack = {}; // pageId → [ commands ] (snapshots for undo)
-  let dindTmr  = null;
+canvas.addEventListener("pointerdown", (e) => { drawing = true; const {x,y} = getPos(e); lastX=x; lastY=y; });
+canvas.addEventListener("pointermove", (e) => {
+  if (!drawing) return;
+  const {x, y} = getPos(e);
+  drawStroke(lastX, lastY, x, y, penColor, penSize, isEraser);
+  socket.emit("draw", { roomId, data: { x0:lastX, y0:lastY, x1:x, y1:y, color:penColor, size:penSize, eraser:isEraser } });
+  lastX = x; lastY = y;
+});
+canvas.addEventListener("pointerup",    () => drawing = false);
+canvas.addEventListener("pointerleave", () => drawing = false);
 
-  // Snapshot canvas before each stroke for undo
-  let preStrokeSnap = null;
+// Remote draw + "who is drawing" indicator
+let drawIndicatorTimer = null;
+socket.on("draw", ({ x0, y0, x1, y1, color, size, eraser }) => {
+  drawStroke(x0, y0, x1, y1, color, size, eraser);
+  const ind  = document.getElementById("drawingIndicator");
+  document.getElementById("drawingName").textContent = remoteUserName || "Participant";
+  ind.classList.add("visible");
+  clearTimeout(drawIndicatorTimer);
+  drawIndicatorTimer = setTimeout(() => ind.classList.remove("visible"), 1200);
+});
 
-  // ── Resize: preserve drawing via dataURL ──
-  let snapURL = null;
-  function resize() {
-    if (canvas.width > 0 && canvas.height > 0) snapURL = canvas.toDataURL();
-    canvas.width  = canvas.offsetWidth  || canvas.parentElement.offsetWidth;
-    canvas.height = canvas.offsetHeight || canvas.parentElement.offsetHeight;
-    redraw();
-  }
-  new ResizeObserver(resize).observe(canvas.parentElement);
+socket.on("clear-board", () => ctx.clearRect(0, 0, canvas.width, canvas.height));
 
-  // ── Coordinate helpers (normalized 0-1) ──
-  function norm(px, py) {
-    return { nx: px / canvas.width, ny: py / canvas.height };
-  }
-  function denorm(nx, ny) {
-    return { x: nx * canvas.width, y: ny * canvas.height };
-  }
-  function getEvtPos(e) {
-    const r = canvas.getBoundingClientRect();
-    const s = e.touches ? e.touches[0] : e;
-    return {
-      x: (s.clientX - r.left),
-      y: (s.clientY - r.top),
-    };
-  }
-
-  // ── Drawing primitives ──
-  function applyCmd(cmd) {
-    ctx.save();
-    ctx.lineCap = ctx.lineJoin = "round";
-    const c = cmd.color || "#fff";
-    const w = Math.max(1, (cmd.size || 3));
-
-    if (cmd.type === "stroke") {
-      const {x:x0,y:y0} = denorm(cmd.x0, cmd.y0);
-      const {x:x1,y:y1} = denorm(cmd.x1, cmd.y1);
-      if (cmd.erase) { ctx.globalCompositeOperation = "destination-out"; ctx.strokeStyle = "rgba(0,0,0,1)"; }
-      else           { ctx.globalCompositeOperation = "source-over";     ctx.strokeStyle = c; }
-      ctx.lineWidth = w;
-      ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
-
-    } else if (cmd.type === "line") {
-      const {x:x0,y:y0} = denorm(cmd.x0, cmd.y0);
-      const {x:x1,y:y1} = denorm(cmd.x1, cmd.y1);
-      ctx.strokeStyle = c; ctx.lineWidth = w; ctx.globalCompositeOperation = "source-over";
-      ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
-
-    } else if (cmd.type === "rect") {
-      const {x:x0,y:y0} = denorm(cmd.x0, cmd.y0);
-      const {x:x1,y:y1} = denorm(cmd.x1, cmd.y1);
-      ctx.strokeStyle = c; ctx.lineWidth = w; ctx.globalCompositeOperation = "source-over";
-      ctx.strokeRect(x0, y0, x1-x0, y1-y0);
-
-    } else if (cmd.type === "circ") {
-      const {x:cx,y:cy} = denorm(cmd.cx, cmd.cy);
-      const {x:rx,y:ry} = denorm(cmd.rx, cmd.ry);
-      const rad = Math.sqrt((rx-cx)**2 + (ry-cy)**2);
-      ctx.strokeStyle = c; ctx.lineWidth = w; ctx.globalCompositeOperation = "source-over";
-      ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI*2); ctx.stroke();
-
-    } else if (cmd.type === "arrow") {
-      const {x:x0,y:y0} = denorm(cmd.x0, cmd.y0);
-      const {x:x1,y:y1} = denorm(cmd.x1, cmd.y1);
-      ctx.strokeStyle = c; ctx.fillStyle = c; ctx.lineWidth = w; ctx.globalCompositeOperation = "source-over";
-      const angle = Math.atan2(y1-y0, x1-x0);
-      const hs    = Math.max(8, w * 4);
-      ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x1 - hs*Math.cos(angle-0.4), y1 - hs*Math.sin(angle-0.4));
-      ctx.lineTo(x1 - hs*Math.cos(angle+0.4), y1 - hs*Math.sin(angle+0.4));
-      ctx.closePath(); ctx.fill();
-
-    } else if (cmd.type === "text") {
-      const {x,y} = denorm(cmd.x, cmd.y);
-      const fs = Math.max(12, w * 5);
-      ctx.fillStyle = c; ctx.font = `${fs}px DM Sans, sans-serif`;
-      ctx.globalCompositeOperation = "source-over";
-      ctx.fillText(cmd.text || "", x, y);
-
-    } else if (cmd.type === "clear") {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-    ctx.restore();
-  }
-
-  // ── Redraw full page from stored commands ──
-  function redraw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const cmds = pages[activePage] || [];
-    cmds.forEach(applyCmd);
-  }
-
-  // ── Pages ──
-  function loadPages(pagesData, active) {
-    Object.assign(pages, pagesData || {});
-    activePage = active || "1";
-    renderPageTabs();
-    redraw();
-  }
-
-  function renderPageTabs() {
-    const bar = document.getElementById("pageTabs");
-    if (!bar) return;
-    bar.innerHTML = "";
-    Object.keys(pages).forEach(pid => {
-      const b = document.createElement("button");
-      b.className = "ptab" + (pid === activePage ? " on" : "");
-      b.textContent = "Page " + pid;
-      b.onclick = () => {
-        if (!ME.isTutor) return;
-        socket.emit("switch-page", { roomId: ROOM, pageId: pid });
-      };
-      bar.appendChild(b);
-    });
-  }
-
-  socket.on("page-added",   ({ pageId, activePage: ap }) => { pages[pageId] = []; activePage = ap; renderPageTabs(); redraw(); });
-  socket.on("switch-page",  ({ pageId })                  => { activePage = pageId; renderPageTabs(); redraw(); });
-  socket.on("clear-page",   ({ pageId })                  => { pages[pageId] = []; if (pageId === activePage) redraw(); });
-
-  // ── Add page button ──
-  document.getElementById("addPageBtn")?.addEventListener("click", () => {
-    if (!ME.isTutor) return;
-    socket.emit("add-page", { roomId: ROOM });
-  });
-
-  // ── Shape preview overlay (drawn on top while dragging) ──
-  let previewCmd = null;
-
-  function drawPreview() {
-    redraw();
-    if (previewCmd) applyCmd(previewCmd);
-  }
-
-  // ── Pointer events ──
-  canvas.addEventListener("pointerdown", e => {
-    if (locked && tool !== "move") return;
-    e.preventDefault();
-    canvas.setPointerCapture(e.pointerId);
-    const {x,y} = getEvtPos(e);
-
-    if (tool === "move") {
-      drawing=true; panStartX=x-panOX; panStartY=y-panOY;
-      return;
-    }
-
-    if (tool === "text") {
-      const txt = prompt("Enter text:");
-      if (!txt) return;
-      const {nx,ny} = norm(x,y);
-      const cmd = { type:"text", x:nx, y:ny, text:txt, color, size, pageId:activePage };
-      pushCmd(cmd); sendCmd(cmd);
-      return;
-    }
-
-    drawing = true;
-    const n = norm(x,y);
-    startX=n.nx; startY=n.ny; lastX=n.nx; lastY=n.ny;
-    preStrokeSnap = canvas.toDataURL();
-  });
-
-  canvas.addEventListener("pointermove", e => {
-    if (!drawing) return;
-    e.preventDefault();
-    const {x,y} = getEvtPos(e);
-
-    if (tool === "move") {
-      panOX = x - panStartX; panOY = y - panStartY;
-      // Note: pan is purely visual offset — for simplicity we skip pan storage
-      // (pan resets on reload, which is expected)
-      redraw(); return;
-    }
-
-    const {nx,ny} = norm(x,y);
-
-    if (tool === "pen" || tool === "erase") {
-      const cmd = { type:"stroke", x0:lastX, y0:lastY, x1:nx, y1:ny, color, size, erase: tool==="erase", pageId:activePage };
-      pushCmd(cmd); sendCmd(cmd); applyCmd(cmd);
-      lastX=nx; lastY=ny;
-
-    } else {
-      // Shape preview
-      previewCmd = makeShapeCmd(nx, ny);
-      drawPreview();
-    }
-  });
-
-  canvas.addEventListener("pointerup", e => {
-    if (!drawing) return;
-    drawing = false; previewCmd = null;
-    if (tool === "move") return;
-    if (tool === "pen" || tool === "erase" || tool === "text") return;
-
-    const {x,y} = getEvtPos(e);
-    const {nx,ny} = norm(x,y);
-    const cmd = makeShapeCmd(nx, ny);
-    if (cmd) { pushCmd(cmd); sendCmd(cmd); redraw(); applyCmd(cmd); }
-  });
-
-  canvas.addEventListener("pointercancel", () => { drawing = false; previewCmd = null; });
-
-  function makeShapeCmd(nx, ny) {
-    if (tool === "line")  return { type:"line",  x0:startX, y0:startY, x1:nx, y1:ny, color, size, pageId:activePage };
-    if (tool === "rect")  return { type:"rect",  x0:startX, y0:startY, x1:nx, y1:ny, color, size, pageId:activePage };
-    if (tool === "circ")  return { type:"circ",  cx:startX, cy:startY, rx:nx, ry:ny, color, size, pageId:activePage };
-    if (tool === "arrow") return { type:"arrow", x0:startX, y0:startY, x1:nx, y1:ny, color, size, pageId:activePage };
-    return null;
-  }
-
-  // ── Store + send ──
-  function pushCmd(cmd) {
-    if (!pages[activePage]) pages[activePage] = [];
-    pages[activePage].push(cmd);
-  }
-  function sendCmd(cmd) {
-    socket.emit("draw-cmd", { roomId: ROOM, cmd });
-  }
-
-  // ── Receive remote commands ──
-  socket.on("draw-cmd", ({ senderName, ...cmd }) => {
-    const pid = cmd.pageId || activePage;
-    if (!pages[pid]) pages[pid] = [];
-    pages[pid].push(cmd);
-    if (pid === activePage) applyCmd(cmd);
-    // Show drawing indicator
-    document.getElementById("dind").textContent = `✏️ ${senderName || "Other"} is drawing…`;
-    document.getElementById("dind").classList.add("show");
-    clearTimeout(dindTmr);
-    dindTmr = setTimeout(() => document.getElementById("dind")?.classList.remove("show"), 1500);
-  });
-
-  // ── Undo ──
-  function undo() {
-    if (!pages[activePage]?.length) return;
-    pages[activePage].pop();
-    redraw();
-    // Note: undo is local-only (not broadcast — keeping it simple)
-  }
-
-  // ── Toolbar wiring ──
-  function setTool(t) {
-    tool = t;
-    ["tPen","tLine","tRect","tCirc","tArrow","tText","tMove","tErase"].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.classList.toggle("on", id === "t"+t.charAt(0).toUpperCase()+t.slice(1));
-    });
-    canvas.className = (locked && t !== "move") ? "nope" : (t === "move" ? "move" : "draw");
-  }
-
-  document.getElementById("tPen")  ?.addEventListener("click", () => setTool("pen"));
-  document.getElementById("tLine") ?.addEventListener("click", () => setTool("line"));
-  document.getElementById("tRect") ?.addEventListener("click", () => setTool("rect"));
-  document.getElementById("tCirc") ?.addEventListener("click", () => setTool("circ"));
-  document.getElementById("tArrow")?.addEventListener("click", () => setTool("arrow"));
-  document.getElementById("tText") ?.addEventListener("click", () => setTool("text"));
-  document.getElementById("tMove") ?.addEventListener("click", () => setTool("move"));
-  document.getElementById("tErase")?.addEventListener("click", () => setTool("erase"));
-  document.getElementById("tUndo") ?.addEventListener("click", undo);
-  document.getElementById("tClear")?.addEventListener("click", () => {
-    if (locked) return;
-    if (!confirm("Clear this page?")) return;
-    pages[activePage] = [];
-    redraw();
-    socket.emit("clear-page", { roomId: ROOM, pageId: activePage });
-  });
-
-  document.querySelectorAll(".cswatch").forEach(el => {
-    el.addEventListener("click", () => {
-      if (locked) return;
-      document.querySelectorAll(".cswatch").forEach(s => s.classList.remove("on"));
-      el.classList.add("on");
-      color = el.dataset.c;
-      if (tool === "erase" || tool === "move") setTool("pen");
-    });
-  });
-
-  document.getElementById("szSlider")?.addEventListener("input", e => { size = +e.target.value; });
-
-  return {
-    loadPages,
-    setLocked(v) {
-      locked = v;
-      canvas.className = v ? "nope" : (tool === "move" ? "move" : "draw");
-    },
+// Color swatches
+document.querySelectorAll(".color-swatch").forEach(el => {
+  el.onclick = () => {
+    document.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("active"));
+    el.classList.add("active");
+    penColor = el.dataset.color;
+    isEraser = false;
+    document.getElementById("eraserBtn").classList.remove("active");
   };
-})();
+});
 
-// ═══════════════════════════════════════════════════════
-// START
-// ═══════════════════════════════════════════════════════
-applyDrawPerm(false); // default locked until server says otherwise
+document.getElementById("eraserBtn").onclick = () => {
+  isEraser = !isEraser;
+  document.getElementById("eraserBtn").classList.toggle("active", isEraser);
+};
+
+document.getElementById("sizeSlider").oninput = (e) => penSize = parseInt(e.target.value);
+
+document.getElementById("clearBtn").onclick = () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  socket.emit("clear-board", { roomId });
+};
+
+// ── Start ─────────────────────────────────────────────────────
 startMedia();
 </script>
 </body>
