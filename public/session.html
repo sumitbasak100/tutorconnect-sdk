@@ -6,84 +6,116 @@
 <title>TutorConnect Session</title>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  :root{
-    --bg:#0e0f14;--surface:#16181f;--surface2:#1e2028;
-    --border:#2a2d38;--accent:#6c63ff;--accent2:#00d2aa;
-    --text:#e8eaf0;--muted:#6b7280;--danger:#ff4d6d;
-  }
-  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e0f14;--surface:#16181f;--surface2:#1e2028;
+  --border:#2a2d38;--accent:#6c63ff;--accent2:#00d2aa;
+  --text:#e8eaf0;--muted:#6b7280;--danger:#ff4d6d;--warn:#f59e0b;
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
-  /* Header */
-  .header{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;gap:12px}
-  .logo{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600}
-  .logo-dot{width:8px;height:8px;border-radius:50%;background:var(--accent2);animation:pulse 2s infinite}
-  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.3)}}
-  .user-badge{display:flex;align-items:center;gap:7px;padding:4px 12px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);font-size:12px}
-  .user-avatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:white}
-  .role-tutor{background:var(--accent)}
-  .role-student{background:var(--accent2);color:#000}
-  .status-pill{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);padding:4px 10px;border-radius:20px;background:var(--surface2);border:1px solid var(--border)}
-  .status-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);transition:background .3s}
-  .status-dot.connected{background:var(--accent2)}
+/* ── Header ── */
+.header{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;gap:12px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--accent2);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.3)}}
+.user-badge{display:flex;align-items:center;gap:7px;padding:4px 12px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);font-size:12px}
+.user-avatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:white}
+.role-tutor{background:var(--accent)}
+.role-student{background:var(--accent2);color:#000}
+.status-pill{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);padding:4px 10px;border-radius:20px;background:var(--surface2);border:1px solid var(--border)}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);transition:background .3s}
+.status-dot.connected{background:var(--accent2)}
+.status-dot.reconnecting{background:var(--warn);animation:pulse 1s infinite}
 
-  /* Layout */
-  .main{display:flex;flex:1;overflow:hidden}
+/* ── Layout ── */
+.main{display:flex;flex:1;overflow:hidden}
 
-  /* Whiteboard */
-  .wb-panel{flex:1;display:flex;flex-direction:column;background:#1a1b22;position:relative}
-  .toolbar{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
-  .tb-label{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-right:4px}
-  .tool-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s}
-  .tool-btn:hover{background:var(--border)}
-  .tool-btn.active{background:var(--accent);border-color:var(--accent)}
-  .color-swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color .15s,transform .15s}
-  .color-swatch:hover{transform:scale(1.15)}
-  .color-swatch.active{border-color:var(--text)}
-  .size-slider{-webkit-appearance:none;width:80px;height:4px;border-radius:2px;background:var(--border);outline:none;cursor:pointer}
-  .size-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer}
-  .divider{width:1px;height:24px;background:var(--border);margin:0 4px}
-  .clear-btn{margin-left:auto;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
-  .clear-btn:hover{background:var(--danger);color:white;border-color:var(--danger)}
-  canvas{flex:1;display:block;cursor:crosshair;touch-action:none}
+/* ── Whiteboard ── */
+.wb-panel{flex:1;display:flex;flex-direction:column;background:#1a1b22;position:relative;min-width:0}
+.toolbar{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+.tb-label{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-right:4px}
+.tool-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s;flex-shrink:0}
+.tool-btn:hover{background:var(--border)}
+.tool-btn.active{background:var(--accent);border-color:var(--accent)}
+.tool-btn:disabled{opacity:.35;cursor:not-allowed}
+.color-swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color .15s,transform .15s;flex-shrink:0}
+.color-swatch:hover{transform:scale(1.15)}
+.color-swatch.active{border-color:var(--text)}
+.color-swatch.disabled{opacity:.3;pointer-events:none}
+.size-slider{-webkit-appearance:none;width:70px;height:4px;border-radius:2px;background:var(--border);outline:none;cursor:pointer}
+.size-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer}
+.divider{width:1px;height:24px;background:var(--border);margin:0 2px;flex-shrink:0}
+.clear-btn{padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;flex-shrink:0}
+.clear-btn:hover:not(:disabled){background:var(--danger);color:white;border-color:var(--danger)}
+.clear-btn:disabled{opacity:.35;cursor:not-allowed}
 
-  /* Live indicator — shows who is drawing */
-  .drawing-indicator{position:absolute;top:12px;left:12px;font-size:12px;color:var(--accent2);background:rgba(0,210,170,.1);border:1px solid rgba(0,210,170,.25);padding:4px 10px;border-radius:20px;opacity:0;transition:opacity .3s;pointer-events:none}
-  .drawing-indicator.show{opacity:1}
+/* Draw permission banner */
+.draw-banner{padding:6px 14px;font-size:12px;text-align:center;flex-shrink:0;display:none}
+.draw-banner.show{display:block}
+.draw-banner.locked{background:rgba(245,158,11,.1);color:var(--warn);border-bottom:1px solid rgba(245,158,11,.2)}
+.draw-banner.unlocked{background:rgba(0,210,170,.1);color:var(--accent2);border-bottom:1px solid rgba(0,210,170,.2)}
 
-  /* Waiting overlay */
-  .waiting-overlay{position:absolute;inset:0;background:rgba(14,15,20,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:10;backdrop-filter:blur(4px)}
-  .waiting-overlay.hidden{display:none}
-  .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .waiting-text{font-size:14px;color:var(--muted)}
-  .waiting-name{font-size:16px;font-weight:600;color:var(--text)}
+canvas{flex:1;display:block;touch-action:none}
+canvas.drawing-allowed{cursor:crosshair}
+canvas.drawing-locked{cursor:not-allowed}
 
-  /* Video panel */
-  .video-panel{width:280px;flex-shrink:0;display:flex;flex-direction:column;background:var(--surface);border-left:1px solid var(--border)}
-  .video-stack{flex:1;display:flex;flex-direction:column;overflow:hidden}
-  .video-slot{flex:1;position:relative;background:#0a0b10;overflow:hidden;border-bottom:1px solid var(--border)}
-  .video-slot video{width:100%;height:100%;object-fit:cover;display:block}
-  .video-label{position:absolute;bottom:8px;left:8px;font-size:11px;font-weight:500;color:white;background:rgba(0,0,0,.55);padding:3px 8px;border-radius:5px;backdrop-filter:blur(6px)}
-  .no-video{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--muted);font-size:13px}
-  .avatar{width:52px;height:52px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;border:2px solid var(--border)}
+/* Drawing indicator */
+.drawing-indicator{position:absolute;top:52px;left:12px;font-size:12px;color:var(--accent2);background:rgba(0,210,170,.1);border:1px solid rgba(0,210,170,.25);padding:4px 10px;border-radius:20px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5}
+.drawing-indicator.show{opacity:1}
 
-  /* Controls */
-  .controls{display:flex;justify-content:center;gap:10px;padding:14px 12px;border-top:1px solid var(--border)}
-  .ctrl-btn{width:42px;height:42px;border-radius:50%;border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .15s;background:var(--surface2);color:var(--text)}
-  .ctrl-btn:hover{transform:scale(1.08)}
-  .ctrl-btn.end{background:var(--danger);color:white;border-color:var(--danger)}
+/* Waiting overlay */
+.waiting-overlay{position:absolute;inset:0;background:rgba(14,15,20,.93);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:10;backdrop-filter:blur(4px);transition:opacity .4s}
+.waiting-overlay.hidden{opacity:0;pointer-events:none}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.waiting-text{font-size:14px;color:var(--muted)}
+.waiting-name{font-size:17px;font-weight:600;color:var(--text)}
 
-  /* Toast */
-  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface2);border:1px solid var(--border);padding:8px 18px;border-radius:8px;font-size:13px;color:var(--text);opacity:0;pointer-events:none;transition:all .3s;z-index:999}
-  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* ── Video panel ── */
+.video-panel{width:280px;flex-shrink:0;display:flex;flex-direction:column;background:var(--surface);border-left:1px solid var(--border)}
+.video-stack{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.video-slot{flex:1;position:relative;background:#0a0b10;overflow:hidden;border-bottom:1px solid var(--border)}
+.video-slot video{width:100%;height:100%;object-fit:cover;display:block}
+.video-label{position:absolute;bottom:8px;left:8px;font-size:11px;font-weight:500;color:white;background:rgba(0,0,0,.55);padding:3px 8px;border-radius:5px;backdrop-filter:blur(6px)}
+.no-video{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--muted);font-size:13px}
+.avatar-big{width:52px;height:52px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;border:2px solid var(--border)}
 
-  /* Error screen */
-  .error-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:999;display:none}
-  .error-screen.show{display:flex}
-  .error-icon{font-size:40px}
-  .error-msg{font-size:15px;color:var(--muted);text-align:center;max-width:320px}
+/* Fullscreen button on video slots */
+.fs-btn{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:6px;background:rgba(0,0,0,.5);border:none;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;opacity:0;transition:opacity .2s;backdrop-filter:blur(4px)}
+.video-slot:hover .fs-btn{opacity:1}
+
+/* Tutor draw permission toggle */
+.perm-row{padding:10px 14px;border-bottom:1px solid var(--border);display:none}
+.perm-row.show{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.perm-label{font-size:12px;color:var(--muted)}
+.perm-toggle{position:relative;width:36px;height:20px;flex-shrink:0}
+.perm-toggle input{opacity:0;width:0;height:0}
+.perm-slider{position:absolute;inset:0;background:var(--border);border-radius:20px;cursor:pointer;transition:.3s}
+.perm-slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:white;border-radius:50%;transition:.3s}
+.perm-toggle input:checked + .perm-slider{background:var(--accent2)}
+.perm-toggle input:checked + .perm-slider::before{transform:translateX(16px)}
+
+/* Controls */
+.controls{display:flex;justify-content:center;gap:10px;padding:12px;border-top:1px solid var(--border)}
+.ctrl-btn{width:42px;height:42px;border-radius:50%;border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .15s;background:var(--surface2);color:var(--text)}
+.ctrl-btn:hover{transform:scale(1.08)}
+.ctrl-btn.off{background:var(--surface2);opacity:.5}
+.ctrl-btn.end{background:var(--danger);color:white;border-color:var(--danger)}
+.ctrl-btn.end:hover{background:#e0003d}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface2);border:1px solid var(--border);padding:8px 18px;border-radius:8px;font-size:13px;color:var(--text);opacity:0;pointer-events:none;transition:all .3s;z-index:999;max-width:320px;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Error / ended screen */
+.overlay-screen{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:9999;padding:20px;text-align:center}
+.overlay-screen.show{display:flex}
+.overlay-icon{font-size:44px}
+.overlay-title{font-size:18px;font-weight:600}
+.overlay-msg{font-size:14px;color:var(--muted);max-width:320px;line-height:1.6}
+.overlay-btn{margin-top:8px;padding:10px 24px;border-radius:8px;background:var(--accent);color:white;border:none;cursor:pointer;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500}
 </style>
 </head>
 <body>
@@ -101,6 +133,7 @@
 </div>
 
 <div class="main">
+
   <!-- Whiteboard -->
   <div class="wb-panel">
     <div class="toolbar">
@@ -115,147 +148,296 @@
       <button class="tool-btn" id="eraserBtn" title="Eraser">⌫</button>
       <div class="divider"></div>
       <input type="range" class="size-slider" id="sizeSlider" min="1" max="20" value="3"/>
-      <button class="clear-btn" id="clearBtn">Clear All</button>
+      <button class="clear-btn" id="clearBtn">Clear</button>
     </div>
-    <canvas id="whiteboard"></canvas>
-    <div class="drawing-indicator" id="drawingIndicator">✏️ drawing…</div>
 
-    <!-- Waiting overlay -->
+    <!-- Student sees lock/unlock status -->
+    <div class="draw-banner" id="drawBanner"></div>
+
+    <canvas id="whiteboard"></canvas>
+    <div class="drawing-indicator" id="drawingIndicator"></div>
+
     <div class="waiting-overlay" id="waitingOverlay">
       <div class="spinner"></div>
       <div class="waiting-text">Waiting for</div>
       <div class="waiting-name" id="waitingName">the other participant</div>
-      <div class="waiting-text">to join the session…</div>
+      <div class="waiting-text" id="waitingSubtext">to join the session…</div>
     </div>
   </div>
 
-  <!-- Video -->
+  <!-- Video + controls -->
   <div class="video-panel">
+
+    <!-- Draw permission toggle — tutor only -->
+    <div class="perm-row" id="permRow">
+      <span class="perm-label">✏️ Student can draw</span>
+      <label class="perm-toggle">
+        <input type="checkbox" id="permToggle"/>
+        <span class="perm-slider"></span>
+      </label>
+    </div>
+
     <div class="video-stack">
-      <div class="video-slot">
+      <div class="video-slot" id="localSlot">
         <video id="localVideo" autoplay muted playsinline></video>
         <div class="video-label" id="localLabel">You</div>
+        <button class="fs-btn" id="localFsBtn" title="Fullscreen">⛶</button>
       </div>
-      <div class="video-slot">
-        <div class="no-video" id="remoteNoVideo"><div class="avatar">👤</div><span id="remoteNoVideoName">Waiting…</span></div>
+      <div class="video-slot" id="remoteSlot">
+        <div class="no-video" id="remoteNoVideo">
+          <div class="avatar-big">👤</div>
+          <span id="remoteNoVideoName">Waiting…</span>
+        </div>
         <video id="remoteVideo" autoplay playsinline style="display:none"></video>
         <div class="video-label" id="remoteLabel" style="display:none">—</div>
+        <button class="fs-btn" id="remoteFsBtn" title="Fullscreen" style="display:none">⛶</button>
       </div>
     </div>
+
     <div class="controls">
-      <button class="ctrl-btn" id="muteBtn" title="Mute">🎙️</button>
-      <button class="ctrl-btn" id="videoBtn" title="Camera">📷</button>
-      <button class="ctrl-btn end" id="endBtn" title="End">📵</button>
+      <button class="ctrl-btn" id="muteBtn" title="Mute mic">🎙️</button>
+      <button class="ctrl-btn" id="videoBtn" title="Toggle camera">📷</button>
+      <button class="ctrl-btn end" id="endBtn" title="End session">📵</button>
     </div>
   </div>
+
 </div>
 
 <!-- Error screen -->
-<div class="error-screen" id="errorScreen">
-  <div class="error-icon">🚫</div>
-  <div class="error-msg" id="errorMsg">Something went wrong.</div>
+<div class="overlay-screen" id="errorScreen">
+  <div class="overlay-icon">🚫</div>
+  <div class="overlay-title">Can't join session</div>
+  <div class="overlay-msg" id="errorMsg">Something went wrong.</div>
+</div>
+
+<!-- Session ended screen -->
+<div class="overlay-screen" id="endedScreen">
+  <div class="overlay-icon">✅</div>
+  <div class="overlay-title">Session ended</div>
+  <div class="overlay-msg" id="endedMsg">This session has ended.</div>
+  <button class="overlay-btn" onclick="window.close()">Close window</button>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Read identity from URL ───────────────────
-// URL looks like: /session/ROOM_ID?userId=t1&name=Mr.+Smith
-const params  = new URLSearchParams(location.search);
-const roomId  = location.pathname.split("/").pop();
-const userId  = params.get("userId") || "unknown";
-const userName= params.get("name")   || "Unknown";
+// ─────────────────────────────────────────────
+// Identity from URL
+// /session/ROOM_ID?userId=t1&name=Mr.+Smith&role=tutor
+// ─────────────────────────────────────────────
+const params   = new URLSearchParams(location.search);
+const roomId   = location.pathname.split("/").pop();
+const userId   = params.get("userId") || "";
+const userName = params.get("name")   || "Unknown";
+const userRole = params.get("role")   || "student"; // "tutor" | "student"
+const isTutor  = userRole === "tutor";
 
-// ── DOM ──────────────────────────────────────
-const localVideo     = document.getElementById("localVideo");
-const remoteVideo    = document.getElementById("remoteVideo");
-const remoteNoVideo  = document.getElementById("remoteNoVideo");
-const remoteLabel    = document.getElementById("remoteLabel");
+if (!userId) showError("Missing user identity. Please use your assigned join link.");
+
+// ─────────────────────────────────────────────
+// DOM refs
+// ─────────────────────────────────────────────
+const localVideo      = document.getElementById("localVideo");
+const remoteVideo     = document.getElementById("remoteVideo");
+const remoteNoVideo   = document.getElementById("remoteNoVideo");
+const remoteLabel     = document.getElementById("remoteLabel");
+const remoteFsBtn     = document.getElementById("remoteFsBtn");
 const remoteNoVideoName = document.getElementById("remoteNoVideoName");
-const statusDot      = document.getElementById("statusDot");
-const statusText     = document.getElementById("statusText");
-const waitingOverlay = document.getElementById("waitingOverlay");
-const waitingName    = document.getElementById("waitingName");
-const userNameLabel  = document.getElementById("userNameLabel");
-const userAvatar     = document.getElementById("userAvatar");
-const localLabel     = document.getElementById("localLabel");
-const drawingIndicator = document.getElementById("drawingIndicator");
-const toast          = document.getElementById("toast");
-const errorScreen    = document.getElementById("errorScreen");
-const errorMsg       = document.getElementById("errorMsg");
+const statusDot       = document.getElementById("statusDot");
+const statusText      = document.getElementById("statusText");
+const waitingOverlay  = document.getElementById("waitingOverlay");
+const waitingName     = document.getElementById("waitingName");
+const waitingSubtext  = document.getElementById("waitingSubtext");
+const userNameLabel   = document.getElementById("userNameLabel");
+const userAvatar      = document.getElementById("userAvatar");
+const localLabel      = document.getElementById("localLabel");
+const drawBanner      = document.getElementById("drawBanner");
+const drawingIndicator= document.getElementById("drawingIndicator");
+const permRow         = document.getElementById("permRow");
+const permToggle      = document.getElementById("permToggle");
+const toast           = document.getElementById("toast");
 
-// ── Show current user identity in header ─────
+// ─────────────────────────────────────────────
+// UI helpers
+// ─────────────────────────────────────────────
+let toastTimer = null;
+function showToast(msg, duration = 3000) {
+  toast.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), duration);
+}
+
+function showError(msg) {
+  document.getElementById("errorMsg").textContent = msg;
+  document.getElementById("errorScreen").classList.add("show");
+}
+
+function showEnded(msg) {
+  document.getElementById("endedMsg").textContent = msg || "This session has ended.";
+  document.getElementById("endedScreen").classList.add("show");
+}
+
+function setStatus(text, connected = false, reconnecting = false) {
+  statusText.textContent = text;
+  statusDot.classList.toggle("connected",    connected);
+  statusDot.classList.toggle("reconnecting", reconnecting);
+}
+
+// ─────────────────────────────────────────────
+// Set up identity in header
+// ─────────────────────────────────────────────
 userNameLabel.textContent = userName;
-userAvatar.textContent = userName.charAt(0).toUpperCase();
-localLabel.textContent = userName + " (You)";
+userAvatar.textContent    = userName.charAt(0).toUpperCase();
+userAvatar.classList.add(isTutor ? "role-tutor" : "role-student");
+localLabel.textContent    = `${userName} (You)`;
+if (isTutor) permRow.classList.add("show");
 
-// ── Socket ───────────────────────────────────
-const socket = io();
-let localStream    = null;
-let peerConnection = null;
-let isMuted = false, isVideoOff = false;
+// ─────────────────────────────────────────────
+// Draw permission state
+// ─────────────────────────────────────────────
+let drawAllowed = isTutor; // tutor can always draw; student needs permission
+
+function applyDrawPermission(allowed) {
+  drawAllowed = isTutor ? true : allowed;
+  updateToolbarState();
+
+  if (!isTutor) {
+    drawBanner.classList.add("show");
+    if (allowed) {
+      drawBanner.className = "draw-banner show unlocked";
+      drawBanner.textContent = "✏️ You can now draw on the board";
+    } else {
+      drawBanner.className = "draw-banner show locked";
+      drawBanner.textContent = "🔒 Drawing is locked — waiting for tutor to allow";
+    }
+  }
+}
+
+function updateToolbarState() {
+  const disabled = !drawAllowed;
+  document.querySelectorAll(".color-swatch").forEach(el => el.classList.toggle("disabled", disabled));
+  document.getElementById("eraserBtn").disabled = disabled;
+  document.getElementById("clearBtn").disabled  = disabled;
+  document.getElementById("sizeSlider").disabled = disabled;
+  canvas.className = disabled ? "drawing-locked" : "drawing-allowed";
+}
+
+// ─────────────────────────────────────────────
+// Socket
+// ─────────────────────────────────────────────
+const socket = io({ reconnection: true, reconnectionAttempts: 10, reconnectionDelay: 1500 });
+
+socket.on("connect", () => {
+  setStatus("Connected", true);
+  // Re-join on reconnect
+  if (localStream) {
+    socket.emit("join-room", { roomId, userId, name: userName, role: userRole });
+  }
+});
+
+socket.on("disconnect", () => {
+  setStatus("Reconnecting…", false, true);
+});
+
+socket.on("reconnect", () => {
+  setStatus("Reconnected", true);
+  showToast("🔄 Reconnected");
+});
+
+socket.on("reconnect_failed", () => {
+  setStatus("Connection lost", false);
+  showToast("❌ Connection lost. Please refresh.", 8000);
+});
+
+// Auth / join errors
+socket.on("join-error", ({ message }) => showError(message));
+
+// ─────────────────────────────────────────────
+// Room state — server sends this on join
+// Tells us who is ALREADY connected
+// ─────────────────────────────────────────────
+socket.on("room-state", ({ connectedUsers, drawPermission, participants }) => {
+  // Find the other participant's name for the waiting screen
+  const other = Object.values(participants).find(p => p.userId !== userId);
+  if (other) {
+    waitingName.textContent       = other.name;
+    remoteNoVideoName.textContent = other.name;
+    remoteLabel.textContent       = other.name;
+  }
+
+  // Apply draw permission from server
+  applyDrawPermission(drawPermission);
+  if (isTutor) permToggle.checked = drawPermission;
+
+  // FIX: If the other person is ALREADY connected when we join,
+  // hide the waiting overlay immediately and show their status
+  const otherAlreadyConnected = connectedUsers.some(u => u.userId !== userId);
+  if (otherAlreadyConnected) {
+    // Don't hide overlay yet — wait for video (ontrack) to confirm
+    // But update waiting text so it doesn't say "waiting to join"
+    waitingSubtext.textContent = "Establishing video connection…";
+    // Trigger offer since they're already there
+    startOffer();
+  }
+});
+
+// ─────────────────────────────────────────────
+// Media
+// ─────────────────────────────────────────────
+let localStream = null;
+
+async function startMedia() {
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    localVideo.srcObject = localStream;
+  } catch (err) {
+    console.warn("Media access failed:", err.message);
+    showToast("⚠️ Camera/mic not available — joining without video");
+    localStream = new MediaStream();
+  }
+  socket.emit("join-room", { roomId, userId, name: userName, role: userRole });
+}
+
+// ─────────────────────────────────────────────
+// WebRTC
+// ─────────────────────────────────────────────
+let peerConnection  = null;
+let isMuted         = false;
+let isVideoOff      = false;
+let iceCandidateQueue = []; // FIX: queue candidates until remote desc is set
+let remoteDescSet   = false;
 
 const iceConfig = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:stun2.l.google.com:19302" },
   ],
 };
 
-function showToast(msg, duration = 3000) {
-  toast.textContent = msg;
-  toast.classList.add("show");
-  setTimeout(() => toast.classList.remove("show"), duration);
-}
-
-function showError(msg) {
-  errorScreen.classList.add("show");
-  errorMsg.textContent = msg;
-}
-
-// ── Media ────────────────────────────────────
-async function startMedia() {
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    localVideo.srcObject = localStream;
-  } catch {
-    showToast("Camera/mic unavailable — joining without video");
-    localStream = new MediaStream();
-  }
-  // Join room with identity
-  socket.emit("join-room", { roomId, userId, name: userName });
-}
-
-// ── Server sends room state on join ──────────
-socket.on("room-state", ({ participants }) => {
-  // Find the OTHER participant's name to show in waiting screen
-  const others = Object.values(participants).filter(p => p.userId !== userId);
-  if (others.length > 0) {
-    const other = others[0];
-    waitingName.textContent = other.name;
-    remoteNoVideoName.textContent = other.name;
-    remoteLabel.textContent = other.name;
-  }
-});
-
-// ── Auth error ───────────────────────────────
-socket.on("error", ({ message }) => {
-  showError(message);
-});
-
-// ── WebRTC ───────────────────────────────────
 function createPeer() {
+  // Clean up any existing connection
+  if (peerConnection) {
+    peerConnection.close();
+    peerConnection = null;
+  }
+  remoteDescSet     = false;
+  iceCandidateQueue = [];
+
   const pc = new RTCPeerConnection(iceConfig);
+
   localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
 
   pc.ontrack = (e) => {
-    remoteVideo.srcObject = e.streams[0];
+    remoteVideo.srcObject  = e.streams[0];
     remoteVideo.style.display = "block";
     remoteNoVideo.style.display = "none";
-    remoteLabel.style.display = "block";
+    remoteLabel.style.display   = "block";
+    remoteFsBtn.style.display   = "block";
     waitingOverlay.classList.add("hidden");
-    statusDot.classList.add("connected");
-    statusText.textContent = "Connected";
+    setStatus("Connected", true);
+    showToast(`✅ ${remoteLabel.textContent} joined!`);
   };
 
   pc.onicecandidate = (e) => {
@@ -263,96 +445,210 @@ function createPeer() {
   };
 
   pc.onconnectionstatechange = () => {
-    if (["disconnected","failed","closed"].includes(pc.connectionState)) {
-      remoteVideo.style.display = "none";
-      remoteNoVideo.style.display = "flex";
-      remoteLabel.style.display = "none";
-      waitingOverlay.classList.remove("hidden");
-      statusDot.classList.remove("connected");
-      statusText.textContent = "Disconnected";
+    const s = pc.connectionState;
+    if (s === "connected") {
+      setStatus("Connected", true);
+    } else if (s === "connecting") {
+      setStatus("Connecting…", false, true);
+    } else if (["disconnected", "failed"].includes(s)) {
+      setStatus("Reconnecting…", false, true);
+      showToast("⚠️ Video connection dropped — retrying…");
+      // Try to restart ICE
+      setTimeout(() => {
+        if (pc.connectionState === "failed") startOffer();
+      }, 2000);
     }
   };
+
   return pc;
 }
 
-socket.on("peer-joined", async ({ name }) => {
-  showToast(`✅ ${name} joined the session!`);
+async function startOffer() {
   peerConnection = createPeer();
-  const offer = await peerConnection.createOffer();
-  await peerConnection.setLocalDescription(offer);
-  socket.emit("offer", { roomId, offer });
+  try {
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+    socket.emit("offer", { roomId, offer });
+  } catch (err) {
+    console.error("createOffer failed:", err);
+  }
+}
+
+// Someone joined — we become the offerer
+socket.on("peer-joined", async ({ name, role }) => {
+  remoteLabel.textContent       = name;
+  remoteNoVideoName.textContent = name;
+  waitingName.textContent       = name;
+  waitingSubtext.textContent    = "Establishing video connection…";
+  showToast(`👋 ${name} joined the session`);
+  await startOffer();
 });
 
+// We receive an offer — we become the answerer
 socket.on("offer", async ({ offer }) => {
   peerConnection = createPeer();
-  await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-  const answer = await peerConnection.createAnswer();
-  await peerConnection.setLocalDescription(answer);
-  socket.emit("answer", { roomId, answer });
+  try {
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+    remoteDescSet = true;
+
+    // FIX: flush queued ICE candidates
+    for (const c of iceCandidateQueue) {
+      await peerConnection.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
+    }
+    iceCandidateQueue = [];
+
+    const answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
+    socket.emit("answer", { roomId, answer });
+  } catch (err) {
+    console.error("handle offer failed:", err);
+  }
 });
 
 socket.on("answer", async ({ answer }) => {
-  await peerConnection?.setRemoteDescription(new RTCSessionDescription(answer));
+  if (!peerConnection) return;
+  try {
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+    remoteDescSet = true;
+
+    // FIX: flush queued ICE candidates
+    for (const c of iceCandidateQueue) {
+      await peerConnection.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
+    }
+    iceCandidateQueue = [];
+  } catch (err) {
+    console.error("handle answer failed:", err);
+  }
 });
 
 socket.on("ice-candidate", async ({ candidate }) => {
-  try { await peerConnection?.addIceCandidate(new RTCIceCandidate(candidate)); } catch {}
+  if (!peerConnection) return;
+  if (!remoteDescSet) {
+    // FIX: queue candidate instead of dropping it
+    iceCandidateQueue.push(candidate);
+    return;
+  }
+  try {
+    await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+  } catch (err) {
+    console.warn("addIceCandidate failed:", err.message);
+  }
 });
 
 socket.on("peer-left", ({ name }) => {
-  remoteVideo.style.display = "none";
+  remoteVideo.style.display   = "none";
   remoteNoVideo.style.display = "flex";
-  remoteLabel.style.display = "none";
+  remoteLabel.style.display   = "none";
+  remoteFsBtn.style.display   = "none";
   waitingOverlay.classList.remove("hidden");
-  statusDot.classList.remove("connected");
-  statusText.textContent = "Waiting…";
+  waitingSubtext.textContent  = "to rejoin the session…";
+  setStatus("Waiting…", false);
   showToast(`${name} left the session`);
 });
 
-socket.on("session-ended", () => {
-  showToast("Session ended");
-  setTimeout(() => window.close(), 2000);
+socket.on("session-ended", ({ reason } = {}) => {
+  peerConnection?.close();
+  localStream?.getTracks().forEach(t => t.stop());
+  showEnded(reason);
 });
 
-// ── Controls ─────────────────────────────────
+// ─────────────────────────────────────────────
+// Controls
+// ─────────────────────────────────────────────
 document.getElementById("muteBtn").onclick = () => {
   isMuted = !isMuted;
   localStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
-  document.getElementById("muteBtn").textContent = isMuted ? "🔇" : "🎙️";
+  const btn = document.getElementById("muteBtn");
+  btn.textContent = isMuted ? "🔇" : "🎙️";
+  btn.classList.toggle("off", isMuted);
 };
+
 document.getElementById("videoBtn").onclick = () => {
   isVideoOff = !isVideoOff;
   localStream.getVideoTracks().forEach(t => t.enabled = !isVideoOff);
-  document.getElementById("videoBtn").textContent = isVideoOff ? "🚫" : "📷";
+  const btn = document.getElementById("videoBtn");
+  btn.textContent = isVideoOff ? "🚫" : "📷";
+  btn.classList.toggle("off", isVideoOff);
 };
+
 document.getElementById("endBtn").onclick = () => {
   if (confirm("End this session?")) {
     peerConnection?.close();
     localStream?.getTracks().forEach(t => t.stop());
-    window.close();
+    showEnded("You ended the session.");
   }
 };
 
-// ── Whiteboard ────────────────────────────────
+// ─────────────────────────────────────────────
+// Fullscreen buttons
+// ─────────────────────────────────────────────
+function toggleFullscreen(el) {
+  if (!document.fullscreenElement) {
+    el.requestFullscreen?.() || el.webkitRequestFullscreen?.();
+  } else {
+    document.exitFullscreen?.() || document.webkitExitFullscreen?.();
+  }
+}
+document.getElementById("localFsBtn").onclick  = () => toggleFullscreen(document.getElementById("localSlot"));
+document.getElementById("remoteFsBtn").onclick = () => toggleFullscreen(document.getElementById("remoteSlot"));
+
+// ─────────────────────────────────────────────
+// Draw permission toggle (tutor only)
+// ─────────────────────────────────────────────
+permToggle.addEventListener("change", () => {
+  socket.emit("set-draw-permission", { roomId, allowed: permToggle.checked });
+});
+
+socket.on("draw-permission-changed", ({ allowed, byName }) => {
+  applyDrawPermission(allowed);
+  if (isTutor) {
+    permToggle.checked = allowed;
+    showToast(allowed ? "✏️ Student can now draw" : "🔒 Student drawing locked");
+  } else {
+    showToast(allowed ? "✏️ You can now draw!" : "🔒 Drawing locked by tutor");
+  }
+});
+
+// ─────────────────────────────────────────────
+// Whiteboard
+// ─────────────────────────────────────────────
 const canvas = document.getElementById("whiteboard");
 const ctx    = canvas.getContext("2d");
 let drawing  = false, lastX = 0, lastY = 0;
 let penColor = "#ffffff", penSize = 3, isEraser = false;
 let drawIndicatorTimer = null;
 
+// FIX: save/restore board as image on resize instead of getImageData (which breaks on resize)
+let boardSnapshot = null;
+
 function resizeCanvas() {
-  const d = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  canvas.width = canvas.offsetWidth;
+  // Save current drawing as image
+  if (canvas.width > 0 && canvas.height > 0) {
+    boardSnapshot = canvas.toDataURL();
+  }
+  canvas.width  = canvas.offsetWidth;
   canvas.height = canvas.offsetHeight;
-  ctx.putImageData(d, 0, 0);
+
+  // Restore drawing
+  if (boardSnapshot) {
+    const img = new Image();
+    img.onload = () => ctx.drawImage(img, 0, 0);
+    img.src = boardSnapshot;
+  }
 }
+
 window.addEventListener("resize", resizeCanvas);
+// Use ResizeObserver for more reliable canvas resize
+new ResizeObserver(resizeCanvas).observe(canvas);
 resizeCanvas();
 
 function getPos(e) {
   const r = canvas.getBoundingClientRect();
   const s = e.touches ? e.touches[0] : e;
-  return { x: s.clientX - r.left, y: s.clientY - r.top };
+  return {
+    x: (s.clientX - r.left) * (canvas.width  / r.width),
+    y: (s.clientY - r.top)  * (canvas.height / r.height),
+  };
 }
 
 function drawStroke(x0, y0, x1, y1, color, size, eraser) {
@@ -366,30 +662,47 @@ function drawStroke(x0, y0, x1, y1, color, size, eraser) {
   ctx.stroke();
 }
 
-canvas.addEventListener("pointerdown", e => { drawing = true; const p = getPos(e); lastX = p.x; lastY = p.y; });
+canvas.addEventListener("pointerdown", e => {
+  if (!drawAllowed) return;
+  drawing = true;
+  const p = getPos(e);
+  lastX = p.x; lastY = p.y;
+  canvas.setPointerCapture(e.pointerId);
+});
+
 canvas.addEventListener("pointermove", e => {
-  if (!drawing) return;
+  if (!drawing || !drawAllowed) return;
   const { x, y } = getPos(e);
   drawStroke(lastX, lastY, x, y, penColor, penSize, isEraser);
-  socket.emit("draw", { roomId, data: { x0: lastX, y0: lastY, x1: x, y1: y, color: penColor, size: penSize, eraser: isEraser } });
+  socket.emit("draw", {
+    roomId,
+    data: { x0: lastX, y0: lastY, x1: x, y1: y, color: penColor, size: penSize, eraser: isEraser },
+  });
   lastX = x; lastY = y;
 });
-canvas.addEventListener("pointerup",    () => drawing = false);
-canvas.addEventListener("pointerleave", () => drawing = false);
 
-// Remote draw — show indicator with their name
-socket.on("draw", ({ x0, y0, x1, y1, color, size, eraser, name: senderName }) => {
+canvas.addEventListener("pointerup",    () => { drawing = false; });
+canvas.addEventListener("pointercancel",() => { drawing = false; });
+
+// Remote draw events
+socket.on("draw", ({ x0, y0, x1, y1, color, size, eraser, senderName }) => {
   drawStroke(x0, y0, x1, y1, color, size, eraser);
+  // Show who is drawing
   drawingIndicator.textContent = `✏️ ${senderName || "Other"} is drawing…`;
   drawingIndicator.classList.add("show");
   clearTimeout(drawIndicatorTimer);
-  drawIndicatorTimer = setTimeout(() => drawingIndicator.classList.remove("show"), 1200);
+  drawIndicatorTimer = setTimeout(() => drawingIndicator.classList.remove("show"), 1500);
 });
 
-socket.on("clear-board", () => ctx.clearRect(0, 0, canvas.width, canvas.height));
+socket.on("clear-board", () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  boardSnapshot = null;
+});
 
+// Toolbar
 document.querySelectorAll(".color-swatch").forEach(el => {
   el.addEventListener("click", () => {
+    if (!drawAllowed) return;
     document.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("active"));
     el.classList.add("active");
     penColor = el.dataset.color;
@@ -397,17 +710,28 @@ document.querySelectorAll(".color-swatch").forEach(el => {
     document.getElementById("eraserBtn").classList.remove("active");
   });
 });
+
 document.getElementById("eraserBtn").addEventListener("click", () => {
+  if (!drawAllowed) return;
   isEraser = !isEraser;
   document.getElementById("eraserBtn").classList.toggle("active", isEraser);
 });
-document.getElementById("sizeSlider").addEventListener("input", e => penSize = parseInt(e.target.value));
+
+document.getElementById("sizeSlider").addEventListener("input", e => {
+  penSize = parseInt(e.target.value);
+});
+
 document.getElementById("clearBtn").addEventListener("click", () => {
+  if (!drawAllowed) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  boardSnapshot = null;
   socket.emit("clear-board", { roomId });
 });
 
-// ── Start ─────────────────────────────────────
+// ─────────────────────────────────────────────
+// Start
+// ─────────────────────────────────────────────
+applyDrawPermission(false); // default locked until server says otherwise
 startMedia();
 </script>
 </body>
