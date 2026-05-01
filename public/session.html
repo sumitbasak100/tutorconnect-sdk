@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TutorConnect Session</title>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0e0f14;--surface:#16181f;--surface2:#1e2028;
+    --border:#2a2d38;--accent:#6c63ff;--accent2:#00d2aa;
+    --text:#e8eaf0;--muted:#6b7280;--danger:#ff4d6d;
+  }
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+  /* Header */
+  .header{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;gap:12px}
+  .logo{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600}
+  .logo-dot{width:8px;height:8px;border-radius:50%;background:var(--accent2);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.3)}}
+  .user-badge{display:flex;align-items:center;gap:7px;padding:4px 12px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);font-size:12px}
+  .user-avatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:white}
+  .role-tutor{background:var(--accent)}
+  .role-student{background:var(--accent2);color:#000}
+  .status-pill{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);padding:4px 10px;border-radius:20px;background:var(--surface2);border:1px solid var(--border)}
+  .status-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);transition:background .3s}
+  .status-dot.connected{background:var(--accent2)}
+
+  /* Layout */
+  .main{display:flex;flex:1;overflow:hidden}
+
+  /* Whiteboard */
+  .wb-panel{flex:1;display:flex;flex-direction:column;background:#1a1b22;position:relative}
+  .toolbar{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+  .tb-label{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-right:4px}
+  .tool-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s}
+  .tool-btn:hover{background:var(--border)}
+  .tool-btn.active{background:var(--accent);border-color:var(--accent)}
+  .color-swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color .15s,transform .15s}
+  .color-swatch:hover{transform:scale(1.15)}
+  .color-swatch.active{border-color:var(--text)}
+  .size-slider{-webkit-appearance:none;width:80px;height:4px;border-radius:2px;background:var(--border);outline:none;cursor:pointer}
+  .size-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer}
+  .divider{width:1px;height:24px;background:var(--border);margin:0 4px}
+  .clear-btn{margin-left:auto;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+  .clear-btn:hover{background:var(--danger);color:white;border-color:var(--danger)}
+  canvas{flex:1;display:block;cursor:crosshair;touch-action:none}
+
+  /* Live indicator — shows who is drawing */
+  .drawing-indicator{position:absolute;top:12px;left:12px;font-size:12px;color:var(--accent2);background:rgba(0,210,170,.1);border:1px solid rgba(0,210,170,.25);padding:4px 10px;border-radius:20px;opacity:0;transition:opacity .3s;pointer-events:none}
+  .drawing-indicator.show{opacity:1}
+
+  /* Waiting overlay */
+  .waiting-overlay{position:absolute;inset:0;background:rgba(14,15,20,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:10;backdrop-filter:blur(4px)}
+  .waiting-overlay.hidden{display:none}
+  .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .waiting-text{font-size:14px;color:var(--muted)}
+  .waiting-name{font-size:16px;font-weight:600;color:var(--text)}
+
+  /* Video panel */
+  .video-panel{width:280px;flex-shrink:0;display:flex;flex-direction:column;background:var(--surface);border-left:1px solid var(--border)}
+  .video-stack{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  .video-slot{flex:1;position:relative;background:#0a0b10;overflow:hidden;border-bottom:1px solid var(--border)}
+  .video-slot video{width:100%;height:100%;object-fit:cover;display:block}
+  .video-label{position:absolute;bottom:8px;left:8px;font-size:11px;font-weight:500;color:white;background:rgba(0,0,0,.55);padding:3px 8px;border-radius:5px;backdrop-filter:blur(6px)}
+  .no-video{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--muted);font-size:13px}
+  .avatar{width:52px;height:52px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;border:2px solid var(--border)}
+
+  /* Controls */
+  .controls{display:flex;justify-content:center;gap:10px;padding:14px 12px;border-top:1px solid var(--border)}
+  .ctrl-btn{width:42px;height:42px;border-radius:50%;border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .15s;background:var(--surface2);color:var(--text)}
+  .ctrl-btn:hover{transform:scale(1.08)}
+  .ctrl-btn.end{background:var(--danger);color:white;border-color:var(--danger)}
+
+  /* Toast */
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface2);border:1px solid var(--border);padding:8px 18px;border-radius:8px;font-size:13px;color:var(--text);opacity:0;pointer-events:none;transition:all .3s;z-index:999}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* Error screen */
+  .error-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:999;display:none}
+  .error-screen.show{display:flex}
+  .error-icon{font-size:40px}
+  .error-msg{font-size:15px;color:var(--muted);text-align:center;max-width:320px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo"><div class="logo-dot"></div>TutorConnect</div>
+  <div class="user-badge">
+    <div class="user-avatar" id="userAvatar"></div>
+    <span id="userNameLabel">—</span>
+  </div>
+  <div class="status-pill">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">Connecting…</span>
+  </div>
+</div>
+
+<div class="main">
+  <!-- Whiteboard -->
+  <div class="wb-panel">
+    <div class="toolbar">
+      <span class="tb-label">Board</span>
+      <div class="divider"></div>
+      <div class="color-swatch active" style="background:#ffffff" data-color="#ffffff"></div>
+      <div class="color-swatch" style="background:#6c63ff" data-color="#6c63ff"></div>
+      <div class="color-swatch" style="background:#00d2aa" data-color="#00d2aa"></div>
+      <div class="color-swatch" style="background:#ff4d6d" data-color="#ff4d6d"></div>
+      <div class="color-swatch" style="background:#ffd166" data-color="#ffd166"></div>
+      <div class="divider"></div>
+      <button class="tool-btn" id="eraserBtn" title="Eraser">⌫</button>
+      <div class="divider"></div>
+      <input type="range" class="size-slider" id="sizeSlider" min="1" max="20" value="3"/>
+      <button class="clear-btn" id="clearBtn">Clear All</button>
+    </div>
+    <canvas id="whiteboard"></canvas>
+    <div class="drawing-indicator" id="drawingIndicator">✏️ drawing…</div>
+
+    <!-- Waiting overlay -->
+    <div class="waiting-overlay" id="waitingOverlay">
+      <div class="spinner"></div>
+      <div class="waiting-text">Waiting for</div>
+      <div class="waiting-name" id="waitingName">the other participant</div>
+      <div class="waiting-text">to join the session…</div>
+    </div>
+  </div>
+
+  <!-- Video -->
+  <div class="video-panel">
+    <div class="video-stack">
+      <div class="video-slot">
+        <video id="localVideo" autoplay muted playsinline></video>
+        <div class="video-label" id="localLabel">You</div>
+      </div>
+      <div class="video-slot">
+        <div class="no-video" id="remoteNoVideo"><div class="avatar">👤</div><span id="remoteNoVideoName">Waiting…</span></div>
+        <video id="remoteVideo" autoplay playsinline style="display:none"></video>
+        <div class="video-label" id="remoteLabel" style="display:none">—</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="ctrl-btn" id="muteBtn" title="Mute">🎙️</button>
+      <button class="ctrl-btn" id="videoBtn" title="Camera">📷</button>
+      <button class="ctrl-btn end" id="endBtn" title="End">📵</button>
+    </div>
+  </div>
+</div>
+
+<!-- Error screen -->
+<div class="error-screen" id="errorScreen">
+  <div class="error-icon">🚫</div>
+  <div class="error-msg" id="errorMsg">Something went wrong.</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Read identity from URL ───────────────────
+// URL looks like: /session/ROOM_ID?userId=t1&name=Mr.+Smith
+const params  = new URLSearchParams(location.search);
+const roomId  = location.pathname.split("/").pop();
+const userId  = params.get("userId") || "unknown";
+const userName= params.get("name")   || "Unknown";
+
+// ── DOM ──────────────────────────────────────
+const localVideo     = document.getElementById("localVideo");
+const remoteVideo    = document.getElementById("remoteVideo");
+const remoteNoVideo  = document.getElementById("remoteNoVideo");
+const remoteLabel    = document.getElementById("remoteLabel");
+const remoteNoVideoName = document.getElementById("remoteNoVideoName");
+const statusDot      = document.getElementById("statusDot");
+const statusText     = document.getElementById("statusText");
+const waitingOverlay = document.getElementById("waitingOverlay");
+const waitingName    = document.getElementById("waitingName");
+const userNameLabel  = document.getElementById("userNameLabel");
+const userAvatar     = document.getElementById("userAvatar");
+const localLabel     = document.getElementById("localLabel");
+const drawingIndicator = document.getElementById("drawingIndicator");
+const toast          = document.getElementById("toast");
+const errorScreen    = document.getElementById("errorScreen");
+const errorMsg       = document.getElementById("errorMsg");
+
+// ── Show current user identity in header ─────
+userNameLabel.textContent = userName;
+userAvatar.textContent = userName.charAt(0).toUpperCase();
+localLabel.textContent = userName + " (You)";
+
+// ── Socket ───────────────────────────────────
+const socket = io();
+let localStream    = null;
+let peerConnection = null;
+let isMuted = false, isVideoOff = false;
+
+const iceConfig = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+  ],
+};
+
+function showToast(msg, duration = 3000) {
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), duration);
+}
+
+function showError(msg) {
+  errorScreen.classList.add("show");
+  errorMsg.textContent = msg;
+}
+
+// ── Media ────────────────────────────────────
+async function startMedia() {
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    localVideo.srcObject = localStream;
+  } catch {
+    showToast("Camera/mic unavailable — joining without video");
+    localStream = new MediaStream();
+  }
+  // Join room with identity
+  socket.emit("join-room", { roomId, userId, name: userName });
+}
+
+// ── Server sends room state on join ──────────
+socket.on("room-state", ({ participants }) => {
+  // Find the OTHER participant's name to show in waiting screen
+  const others = Object.values(participants).filter(p => p.userId !== userId);
+  if (others.length > 0) {
+    const other = others[0];
+    waitingName.textContent = other.name;
+    remoteNoVideoName.textContent = other.name;
+    remoteLabel.textContent = other.name;
+  }
+});
+
+// ── Auth error ───────────────────────────────
+socket.on("error", ({ message }) => {
+  showError(message);
+});
+
+// ── WebRTC ───────────────────────────────────
+function createPeer() {
+  const pc = new RTCPeerConnection(iceConfig);
+  localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+
+  pc.ontrack = (e) => {
+    remoteVideo.srcObject = e.streams[0];
+    remoteVideo.style.display = "block";
+    remoteNoVideo.style.display = "none";
+    remoteLabel.style.display = "block";
+    waitingOverlay.classList.add("hidden");
+    statusDot.classList.add("connected");
+    statusText.textContent = "Connected";
+  };
+
+  pc.onicecandidate = (e) => {
+    if (e.candidate) socket.emit("ice-candidate", { roomId, candidate: e.candidate });
+  };
+
+  pc.onconnectionstatechange = () => {
+    if (["disconnected","failed","closed"].includes(pc.connectionState)) {
+      remoteVideo.style.display = "none";
+      remoteNoVideo.style.display = "flex";
+      remoteLabel.style.display = "none";
+      waitingOverlay.classList.remove("hidden");
+      statusDot.classList.remove("connected");
+      statusText.textContent = "Disconnected";
+    }
+  };
+  return pc;
+}
+
+socket.on("peer-joined", async ({ name }) => {
+  showToast(`✅ ${name} joined the session!`);
+  peerConnection = createPeer();
+  const offer = await peerConnection.createOffer();
+  await peerConnection.setLocalDescription(offer);
+  socket.emit("offer", { roomId, offer });
+});
+
+socket.on("offer", async ({ offer }) => {
+  peerConnection = createPeer();
+  await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+  const answer = await peerConnection.createAnswer();
+  await peerConnection.setLocalDescription(answer);
+  socket.emit("answer", { roomId, answer });
+});
+
+socket.on("answer", async ({ answer }) => {
+  await peerConnection?.setRemoteDescription(new RTCSessionDescription(answer));
+});
+
+socket.on("ice-candidate", async ({ candidate }) => {
+  try { await peerConnection?.addIceCandidate(new RTCIceCandidate(candidate)); } catch {}
+});
+
+socket.on("peer-left", ({ name }) => {
+  remoteVideo.style.display = "none";
+  remoteNoVideo.style.display = "flex";
+  remoteLabel.style.display = "none";
+  waitingOverlay.classList.remove("hidden");
+  statusDot.classList.remove("connected");
+  statusText.textContent = "Waiting…";
+  showToast(`${name} left the session`);
+});
+
+socket.on("session-ended", () => {
+  showToast("Session ended");
+  setTimeout(() => window.close(), 2000);
+});
+
+// ── Controls ─────────────────────────────────
+document.getElementById("muteBtn").onclick = () => {
+  isMuted = !isMuted;
+  localStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
+  document.getElementById("muteBtn").textContent = isMuted ? "🔇" : "🎙️";
+};
+document.getElementById("videoBtn").onclick = () => {
+  isVideoOff = !isVideoOff;
+  localStream.getVideoTracks().forEach(t => t.enabled = !isVideoOff);
+  document.getElementById("videoBtn").textContent = isVideoOff ? "🚫" : "📷";
+};
+document.getElementById("endBtn").onclick = () => {
+  if (confirm("End this session?")) {
+    peerConnection?.close();
+    localStream?.getTracks().forEach(t => t.stop());
+    window.close();
+  }
+};
+
+// ── Whiteboard ────────────────────────────────
+const canvas = document.getElementById("whiteboard");
+const ctx    = canvas.getContext("2d");
+let drawing  = false, lastX = 0, lastY = 0;
+let penColor = "#ffffff", penSize = 3, isEraser = false;
+let drawIndicatorTimer = null;
+
+function resizeCanvas() {
+  const d = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+  ctx.putImageData(d, 0, 0);
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+function getPos(e) {
+  const r = canvas.getBoundingClientRect();
+  const s = e.touches ? e.touches[0] : e;
+  return { x: s.clientX - r.left, y: s.clientY - r.top };
+}
+
+function drawStroke(x0, y0, x1, y1, color, size, eraser) {
+  ctx.globalCompositeOperation = eraser ? "destination-out" : "source-over";
+  ctx.strokeStyle = color;
+  ctx.lineWidth   = size;
+  ctx.lineCap = ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.lineTo(x1, y1);
+  ctx.stroke();
+}
+
+canvas.addEventListener("pointerdown", e => { drawing = true; const p = getPos(e); lastX = p.x; lastY = p.y; });
+canvas.addEventListener("pointermove", e => {
+  if (!drawing) return;
+  const { x, y } = getPos(e);
+  drawStroke(lastX, lastY, x, y, penColor, penSize, isEraser);
+  socket.emit("draw", { roomId, data: { x0: lastX, y0: lastY, x1: x, y1: y, color: penColor, size: penSize, eraser: isEraser } });
+  lastX = x; lastY = y;
+});
+canvas.addEventListener("pointerup",    () => drawing = false);
+canvas.addEventListener("pointerleave", () => drawing = false);
+
+// Remote draw — show indicator with their name
+socket.on("draw", ({ x0, y0, x1, y1, color, size, eraser, name: senderName }) => {
+  drawStroke(x0, y0, x1, y1, color, size, eraser);
+  drawingIndicator.textContent = `✏️ ${senderName || "Other"} is drawing…`;
+  drawingIndicator.classList.add("show");
+  clearTimeout(drawIndicatorTimer);
+  drawIndicatorTimer = setTimeout(() => drawingIndicator.classList.remove("show"), 1200);
+});
+
+socket.on("clear-board", () => ctx.clearRect(0, 0, canvas.width, canvas.height));
+
+document.querySelectorAll(".color-swatch").forEach(el => {
+  el.addEventListener("click", () => {
+    document.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("active"));
+    el.classList.add("active");
+    penColor = el.dataset.color;
+    isEraser = false;
+    document.getElementById("eraserBtn").classList.remove("active");
+  });
+});
+document.getElementById("eraserBtn").addEventListener("click", () => {
+  isEraser = !isEraser;
+  document.getElementById("eraserBtn").classList.toggle("active", isEraser);
+});
+document.getElementById("sizeSlider").addEventListener("input", e => penSize = parseInt(e.target.value));
+document.getElementById("clearBtn").addEventListener("click", () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  socket.emit("clear-board", { roomId });
+});
+
+// ── Start ─────────────────────────────────────
+startMedia();
+</script>
+</body>
+</html>
