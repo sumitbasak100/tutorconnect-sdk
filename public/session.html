@@ -15,33 +15,33 @@
 }
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
-/* ── Header ── */
+/* Header */
 .header{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;gap:12px;flex-wrap:wrap}
-.logo{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600}
+.logo{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;white-space:nowrap}
 .logo-dot{width:8px;height:8px;border-radius:50%;background:var(--accent2);animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.3)}}
 .user-badge{display:flex;align-items:center;gap:7px;padding:4px 12px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);font-size:12px}
-.user-avatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:white}
+.user-avatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:white;flex-shrink:0}
 .role-tutor{background:var(--accent)}
 .role-student{background:var(--accent2);color:#000}
-.status-pill{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);padding:4px 10px;border-radius:20px;background:var(--surface2);border:1px solid var(--border)}
-.status-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);transition:background .3s}
+.status-pill{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);padding:4px 10px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);white-space:nowrap}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);transition:background .3s;flex-shrink:0}
 .status-dot.connected{background:var(--accent2)}
 .status-dot.reconnecting{background:var(--warn);animation:pulse 1s infinite}
 
-/* ── Layout ── */
+/* Layout */
 .main{display:flex;flex:1;overflow:hidden}
 
-/* ── Whiteboard ── */
+/* Whiteboard */
 .wb-panel{flex:1;display:flex;flex-direction:column;background:#1a1b22;position:relative;min-width:0}
-.toolbar{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
-.tb-label{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-right:4px}
+.toolbar{display:flex;align-items:center;gap:7px;padding:8px 14px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+.tb-label{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-right:2px}
 .tool-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s;flex-shrink:0}
-.tool-btn:hover{background:var(--border)}
+.tool-btn:hover:not(:disabled){background:var(--border)}
 .tool-btn.active{background:var(--accent);border-color:var(--accent)}
-.tool-btn:disabled{opacity:.35;cursor:not-allowed}
+.tool-btn:disabled,.size-slider:disabled{opacity:.3;cursor:not-allowed}
 .color-swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color .15s,transform .15s;flex-shrink:0}
-.color-swatch:hover{transform:scale(1.15)}
+.color-swatch:hover:not(.disabled){transform:scale(1.15)}
 .color-swatch.active{border-color:var(--text)}
 .color-swatch.disabled{opacity:.3;pointer-events:none}
 .size-slider{-webkit-appearance:none;width:70px;height:4px;border-radius:2px;background:var(--border);outline:none;cursor:pointer}
@@ -49,73 +49,71 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;hei
 .divider{width:1px;height:24px;background:var(--border);margin:0 2px;flex-shrink:0}
 .clear-btn{padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;flex-shrink:0}
 .clear-btn:hover:not(:disabled){background:var(--danger);color:white;border-color:var(--danger)}
-.clear-btn:disabled{opacity:.35;cursor:not-allowed}
+.clear-btn:disabled{opacity:.3;cursor:not-allowed}
 
-/* Draw permission banner */
+/* Student draw banner */
 .draw-banner{padding:6px 14px;font-size:12px;text-align:center;flex-shrink:0;display:none}
 .draw-banner.show{display:block}
 .draw-banner.locked{background:rgba(245,158,11,.1);color:var(--warn);border-bottom:1px solid rgba(245,158,11,.2)}
 .draw-banner.unlocked{background:rgba(0,210,170,.1);color:var(--accent2);border-bottom:1px solid rgba(0,210,170,.2)}
 
 canvas{flex:1;display:block;touch-action:none}
-canvas.drawing-allowed{cursor:crosshair}
-canvas.drawing-locked{cursor:not-allowed}
+canvas.can-draw{cursor:crosshair}
+canvas.no-draw{cursor:not-allowed}
 
 /* Drawing indicator */
-.drawing-indicator{position:absolute;top:52px;left:12px;font-size:12px;color:var(--accent2);background:rgba(0,210,170,.1);border:1px solid rgba(0,210,170,.25);padding:4px 10px;border-radius:20px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5}
-.drawing-indicator.show{opacity:1}
+.draw-ind{position:absolute;top:52px;left:12px;font-size:12px;color:var(--accent2);background:rgba(0,210,170,.1);border:1px solid rgba(0,210,170,.25);padding:4px 10px;border-radius:20px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5}
+.draw-ind.show{opacity:1}
 
 /* Waiting overlay */
-.waiting-overlay{position:absolute;inset:0;background:rgba(14,15,20,.93);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:10;backdrop-filter:blur(4px);transition:opacity .4s}
-.waiting-overlay.hidden{opacity:0;pointer-events:none}
+.waiting{position:absolute;inset:0;background:rgba(14,15,20,.93);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:10;backdrop-filter:blur(4px);transition:opacity .4s}
+.waiting.hidden{opacity:0;pointer-events:none}
 .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.waiting-text{font-size:14px;color:var(--muted)}
-.waiting-name{font-size:17px;font-weight:600;color:var(--text)}
+.w-text{font-size:14px;color:var(--muted)}
+.w-name{font-size:17px;font-weight:600;color:var(--text)}
 
-/* ── Video panel ── */
+/* Video panel */
 .video-panel{width:280px;flex-shrink:0;display:flex;flex-direction:column;background:var(--surface);border-left:1px solid var(--border)}
 .video-stack{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.video-slot{flex:1;position:relative;background:#0a0b10;overflow:hidden;border-bottom:1px solid var(--border)}
-.video-slot video{width:100%;height:100%;object-fit:cover;display:block}
-.video-label{position:absolute;bottom:8px;left:8px;font-size:11px;font-weight:500;color:white;background:rgba(0,0,0,.55);padding:3px 8px;border-radius:5px;backdrop-filter:blur(6px)}
-.no-video{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--muted);font-size:13px}
-.avatar-big{width:52px;height:52px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;border:2px solid var(--border)}
-
-/* Fullscreen button on video slots */
+.vslot{flex:1;position:relative;background:#0a0b10;overflow:hidden;border-bottom:1px solid var(--border)}
+.vslot video{width:100%;height:100%;object-fit:cover;display:block}
+.vlabel{position:absolute;bottom:8px;left:8px;font-size:11px;font-weight:500;color:white;background:rgba(0,0,0,.55);padding:3px 8px;border-radius:5px;backdrop-filter:blur(6px);pointer-events:none}
+.no-vid{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--muted);font-size:13px}
+.avatar{width:52px;height:52px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;border:2px solid var(--border)}
 .fs-btn{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:6px;background:rgba(0,0,0,.5);border:none;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;opacity:0;transition:opacity .2s;backdrop-filter:blur(4px)}
-.video-slot:hover .fs-btn{opacity:1}
+.vslot:hover .fs-btn{opacity:1}
 
-/* Tutor draw permission toggle */
-.perm-row{padding:10px 14px;border-bottom:1px solid var(--border);display:none}
-.perm-row.show{display:flex;align-items:center;justify-content:space-between;gap:8px}
+/* Draw permission toggle — tutor only */
+.perm-row{padding:10px 14px;border-bottom:1px solid var(--border);display:none;align-items:center;justify-content:space-between;gap:8px}
+.perm-row.show{display:flex}
 .perm-label{font-size:12px;color:var(--muted)}
-.perm-toggle{position:relative;width:36px;height:20px;flex-shrink:0}
-.perm-toggle input{opacity:0;width:0;height:0}
-.perm-slider{position:absolute;inset:0;background:var(--border);border-radius:20px;cursor:pointer;transition:.3s}
-.perm-slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:white;border-radius:50%;transition:.3s}
-.perm-toggle input:checked + .perm-slider{background:var(--accent2)}
-.perm-toggle input:checked + .perm-slider::before{transform:translateX(16px)}
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.tslider{position:absolute;inset:0;background:var(--border);border-radius:20px;cursor:pointer;transition:.3s}
+.tslider::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:white;border-radius:50%;transition:.3s}
+.toggle input:checked+.tslider{background:var(--accent2)}
+.toggle input:checked+.tslider::before{transform:translateX(16px)}
 
 /* Controls */
 .controls{display:flex;justify-content:center;gap:10px;padding:12px;border-top:1px solid var(--border)}
 .ctrl-btn{width:42px;height:42px;border-radius:50%;border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .15s;background:var(--surface2);color:var(--text)}
 .ctrl-btn:hover{transform:scale(1.08)}
-.ctrl-btn.off{background:var(--surface2);opacity:.5}
+.ctrl-btn.off{opacity:.45}
 .ctrl-btn.end{background:var(--danger);color:white;border-color:var(--danger)}
 .ctrl-btn.end:hover{background:#e0003d}
 
 /* Toast */
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface2);border:1px solid var(--border);padding:8px 18px;border-radius:8px;font-size:13px;color:var(--text);opacity:0;pointer-events:none;transition:all .3s;z-index:999;max-width:320px;text-align:center}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface2);border:1px solid var(--border);padding:8px 18px;border-radius:8px;font-size:13px;color:var(--text);opacity:0;pointer-events:none;transition:all .3s;z-index:9998;max-width:320px;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* Error / ended screen */
-.overlay-screen{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:9999;padding:20px;text-align:center}
-.overlay-screen.show{display:flex}
-.overlay-icon{font-size:44px}
-.overlay-title{font-size:18px;font-weight:600}
-.overlay-msg{font-size:14px;color:var(--muted);max-width:320px;line-height:1.6}
-.overlay-btn{margin-top:8px;padding:10px 24px;border-radius:8px;background:var(--accent);color:white;border:none;cursor:pointer;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500}
+/* Overlay screens (error / ended) */
+.oscreen{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:9999;padding:24px;text-align:center}
+.oscreen.show{display:flex}
+.oicon{font-size:48px}
+.otitle{font-size:20px;font-weight:600}
+.omsg{font-size:14px;color:var(--muted);max-width:340px;line-height:1.7}
+.obtn{margin-top:8px;padding:10px 28px;border-radius:8px;background:var(--accent);color:white;border:none;cursor:pointer;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:500}
 </style>
 </head>
 <body>
@@ -151,156 +149,150 @@ canvas.drawing-locked{cursor:not-allowed}
       <button class="clear-btn" id="clearBtn">Clear</button>
     </div>
 
-    <!-- Student sees lock/unlock status -->
     <div class="draw-banner" id="drawBanner"></div>
-
     <canvas id="whiteboard"></canvas>
-    <div class="drawing-indicator" id="drawingIndicator"></div>
+    <div class="draw-ind" id="drawInd"></div>
 
-    <div class="waiting-overlay" id="waitingOverlay">
+    <div class="waiting" id="waitingOverlay">
       <div class="spinner"></div>
-      <div class="waiting-text">Waiting for</div>
-      <div class="waiting-name" id="waitingName">the other participant</div>
-      <div class="waiting-text" id="waitingSubtext">to join the session…</div>
+      <div class="w-text">Waiting for</div>
+      <div class="w-name" id="waitingName">the other participant</div>
+      <div class="w-text" id="waitingSubtext">to join the session…</div>
     </div>
   </div>
 
-  <!-- Video + controls -->
+  <!-- Video -->
   <div class="video-panel">
 
-    <!-- Draw permission toggle — tutor only -->
+    <!-- Tutor-only draw permission toggle -->
     <div class="perm-row" id="permRow">
       <span class="perm-label">✏️ Student can draw</span>
-      <label class="perm-toggle">
+      <label class="toggle">
         <input type="checkbox" id="permToggle"/>
-        <span class="perm-slider"></span>
+        <span class="tslider"></span>
       </label>
     </div>
 
     <div class="video-stack">
-      <div class="video-slot" id="localSlot">
+      <div class="vslot" id="localSlot">
         <video id="localVideo" autoplay muted playsinline></video>
-        <div class="video-label" id="localLabel">You</div>
+        <div class="vlabel" id="localLabel">You</div>
         <button class="fs-btn" id="localFsBtn" title="Fullscreen">⛶</button>
       </div>
-      <div class="video-slot" id="remoteSlot">
-        <div class="no-video" id="remoteNoVideo">
-          <div class="avatar-big">👤</div>
-          <span id="remoteNoVideoName">Waiting…</span>
+      <div class="vslot" id="remoteSlot">
+        <div class="no-vid" id="remoteNoVid">
+          <div class="avatar">👤</div>
+          <span id="remoteNoVidName">Waiting…</span>
         </div>
         <video id="remoteVideo" autoplay playsinline style="display:none"></video>
-        <div class="video-label" id="remoteLabel" style="display:none">—</div>
-        <button class="fs-btn" id="remoteFsBtn" title="Fullscreen" style="display:none">⛶</button>
+        <div class="vlabel" id="remoteLabel" style="display:none">—</div>
+        <button class="fs-btn" id="remoteFsBtn" style="display:none" title="Fullscreen">⛶</button>
       </div>
     </div>
 
     <div class="controls">
-      <button class="ctrl-btn" id="muteBtn" title="Mute mic">🎙️</button>
-      <button class="ctrl-btn" id="videoBtn" title="Toggle camera">📷</button>
+      <button class="ctrl-btn" id="muteBtn"  title="Mute">🎙️</button>
+      <button class="ctrl-btn" id="videoBtn" title="Camera">📷</button>
       <button class="ctrl-btn end" id="endBtn" title="End session">📵</button>
     </div>
   </div>
-
 </div>
 
 <!-- Error screen -->
-<div class="overlay-screen" id="errorScreen">
-  <div class="overlay-icon">🚫</div>
-  <div class="overlay-title">Can't join session</div>
-  <div class="overlay-msg" id="errorMsg">Something went wrong.</div>
+<div class="oscreen" id="errScreen">
+  <div class="oicon">🚫</div>
+  <div class="otitle">Cannot join session</div>
+  <div class="omsg" id="errMsg">Something went wrong.</div>
 </div>
 
-<!-- Session ended screen -->
-<div class="overlay-screen" id="endedScreen">
-  <div class="overlay-icon">✅</div>
-  <div class="overlay-title">Session ended</div>
-  <div class="overlay-msg" id="endedMsg">This session has ended.</div>
-  <button class="overlay-btn" onclick="window.close()">Close window</button>
+<!-- Ended screen -->
+<div class="oscreen" id="endScreen">
+  <div class="oicon">✅</div>
+  <div class="otitle">Session ended</div>
+  <div class="omsg" id="endMsg">This session has ended.</div>
+  <button class="obtn" onclick="window.close()">Close</button>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
 // ─────────────────────────────────────────────
-// Identity from URL
-// /session/ROOM_ID?userId=t1&name=Mr.+Smith&role=tutor
+// Read identity from URL path
+// URL: /session/:roomId/:userId
 // ─────────────────────────────────────────────
-const params   = new URLSearchParams(location.search);
-const roomId   = location.pathname.split("/").pop();
-const userId   = params.get("userId") || "";
-const userName = params.get("name")   || "Unknown";
-const userRole = params.get("role")   || "student"; // "tutor" | "student"
-const isTutor  = userRole === "tutor";
+const pathParts = location.pathname.split("/").filter(Boolean);
+// pathParts = ["session", "roomId", "userId"]
+const roomId = pathParts[1] || "";
+const userId = decodeURIComponent(pathParts[2] || "");
 
-if (!userId) showError("Missing user identity. Please use your assigned join link.");
+if (!roomId || !userId) showError("Invalid session link. Please use your assigned join URL.");
 
-// ─────────────────────────────────────────────
-// DOM refs
-// ─────────────────────────────────────────────
-const localVideo      = document.getElementById("localVideo");
-const remoteVideo     = document.getElementById("remoteVideo");
-const remoteNoVideo   = document.getElementById("remoteNoVideo");
-const remoteLabel     = document.getElementById("remoteLabel");
-const remoteFsBtn     = document.getElementById("remoteFsBtn");
-const remoteNoVideoName = document.getElementById("remoteNoVideoName");
-const statusDot       = document.getElementById("statusDot");
-const statusText      = document.getElementById("statusText");
-const waitingOverlay  = document.getElementById("waitingOverlay");
-const waitingName     = document.getElementById("waitingName");
-const waitingSubtext  = document.getElementById("waitingSubtext");
-const userNameLabel   = document.getElementById("userNameLabel");
-const userAvatar      = document.getElementById("userAvatar");
-const localLabel      = document.getElementById("localLabel");
-const drawBanner      = document.getElementById("drawBanner");
-const drawingIndicator= document.getElementById("drawingIndicator");
-const permRow         = document.getElementById("permRow");
-const permToggle      = document.getElementById("permToggle");
-const toast           = document.getElementById("toast");
+// These will be filled in from server's room-state response
+let userName = "";
+let userRole = "";
+let isTutor  = false;
 
 // ─────────────────────────────────────────────
-// UI helpers
+// DOM
+// ─────────────────────────────────────────────
+const localVideo     = document.getElementById("localVideo");
+const remoteVideo    = document.getElementById("remoteVideo");
+const remoteNoVid    = document.getElementById("remoteNoVid");
+const remoteLabel    = document.getElementById("remoteLabel");
+const remoteFsBtn    = document.getElementById("remoteFsBtn");
+const remoteNoVidName= document.getElementById("remoteNoVidName");
+const statusDot      = document.getElementById("statusDot");
+const statusText     = document.getElementById("statusText");
+const waitingOverlay = document.getElementById("waitingOverlay");
+const waitingName    = document.getElementById("waitingName");
+const waitingSubtext = document.getElementById("waitingSubtext");
+const userNameLabel  = document.getElementById("userNameLabel");
+const userAvatar     = document.getElementById("userAvatar");
+const localLabel     = document.getElementById("localLabel");
+const drawBanner     = document.getElementById("drawBanner");
+const drawInd        = document.getElementById("drawInd");
+const permRow        = document.getElementById("permRow");
+const permToggle     = document.getElementById("permToggle");
+const toast          = document.getElementById("toast");
+
+// ─────────────────────────────────────────────
+// Helpers
 // ─────────────────────────────────────────────
 let toastTimer = null;
-function showToast(msg, duration = 3000) {
+function showToast(msg, ms = 3000) {
   toast.textContent = msg;
   toast.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove("show"), duration);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), ms);
 }
-
 function showError(msg) {
-  document.getElementById("errorMsg").textContent = msg;
-  document.getElementById("errorScreen").classList.add("show");
+  document.getElementById("errMsg").textContent = msg;
+  document.getElementById("errScreen").classList.add("show");
 }
-
 function showEnded(msg) {
-  document.getElementById("endedMsg").textContent = msg || "This session has ended.";
-  document.getElementById("endedScreen").classList.add("show");
+  document.getElementById("endMsg").textContent = msg || "This session has ended.";
+  document.getElementById("endScreen").classList.add("show");
 }
-
-function setStatus(text, connected = false, reconnecting = false) {
+function setStatus(text, connected, reconnecting) {
   statusText.textContent = text;
-  statusDot.classList.toggle("connected",    connected);
-  statusDot.classList.toggle("reconnecting", reconnecting);
+  statusDot.classList.toggle("connected",    !!connected);
+  statusDot.classList.toggle("reconnecting", !!reconnecting);
 }
 
 // ─────────────────────────────────────────────
-// Set up identity in header
+// Draw permission
 // ─────────────────────────────────────────────
-userNameLabel.textContent = userName;
-userAvatar.textContent    = userName.charAt(0).toUpperCase();
-userAvatar.classList.add(isTutor ? "role-tutor" : "role-student");
-localLabel.textContent    = `${userName} (You)`;
-if (isTutor) permRow.classList.add("show");
-
-// ─────────────────────────────────────────────
-// Draw permission state
-// ─────────────────────────────────────────────
-let drawAllowed = isTutor; // tutor can always draw; student needs permission
+let drawAllowed = false;
 
 function applyDrawPermission(allowed) {
-  drawAllowed = isTutor ? true : allowed;
-  updateToolbarState();
+  drawAllowed = isTutor ? true : !!allowed;
+  const locked = !drawAllowed;
+
+  document.querySelectorAll(".color-swatch").forEach(e => e.classList.toggle("disabled", locked));
+  document.getElementById("eraserBtn").disabled  = locked;
+  document.getElementById("clearBtn").disabled   = locked;
+  document.getElementById("sizeSlider").disabled = locked;
+  canvas.className = locked ? "no-draw" : "can-draw";
 
   if (!isTutor) {
     drawBanner.classList.add("show");
@@ -309,75 +301,61 @@ function applyDrawPermission(allowed) {
       drawBanner.textContent = "✏️ You can now draw on the board";
     } else {
       drawBanner.className = "draw-banner show locked";
-      drawBanner.textContent = "🔒 Drawing is locked — waiting for tutor to allow";
+      drawBanner.textContent = "🔒 Drawing locked — waiting for tutor to allow";
     }
   }
-}
-
-function updateToolbarState() {
-  const disabled = !drawAllowed;
-  document.querySelectorAll(".color-swatch").forEach(el => el.classList.toggle("disabled", disabled));
-  document.getElementById("eraserBtn").disabled = disabled;
-  document.getElementById("clearBtn").disabled  = disabled;
-  document.getElementById("sizeSlider").disabled = disabled;
-  canvas.className = disabled ? "drawing-locked" : "drawing-allowed";
 }
 
 // ─────────────────────────────────────────────
 // Socket
 // ─────────────────────────────────────────────
-const socket = io({ reconnection: true, reconnectionAttempts: 10, reconnectionDelay: 1500 });
+const socket = io({
+  reconnection:        true,
+  reconnectionAttempts:15,
+  reconnectionDelay:   1500,
+  reconnectionDelayMax:5000,
+});
 
 socket.on("connect", () => {
   setStatus("Connected", true);
-  // Re-join on reconnect
-  if (localStream) {
-    socket.emit("join-room", { roomId, userId, name: userName, role: userRole });
-  }
+  if (localStream) socket.emit("join-room", { roomId, userId });
 });
-
-socket.on("disconnect", () => {
-  setStatus("Reconnecting…", false, true);
-});
-
-socket.on("reconnect", () => {
-  setStatus("Reconnected", true);
-  showToast("🔄 Reconnected");
-});
-
-socket.on("reconnect_failed", () => {
-  setStatus("Connection lost", false);
-  showToast("❌ Connection lost. Please refresh.", 8000);
-});
-
-// Auth / join errors
-socket.on("join-error", ({ message }) => showError(message));
+socket.on("disconnect",       () => setStatus("Reconnecting…", false, true));
+socket.on("reconnect",        () => { setStatus("Connected", true); showToast("🔄 Reconnected"); });
+socket.on("reconnect_failed", () => { setStatus("Connection lost"); showToast("❌ Connection lost. Please refresh.", 8000); });
+socket.on("join-error",       ({ message }) => showError(message));
 
 // ─────────────────────────────────────────────
-// Room state — server sends this on join
-// Tells us who is ALREADY connected
+// Room state — server sends this after join
+// Contains our name, role, and who is already connected
 // ─────────────────────────────────────────────
-socket.on("room-state", ({ connectedUsers, drawPermission, participants }) => {
-  // Find the other participant's name for the waiting screen
+socket.on("room-state", ({ participants, connectedUsers, drawPermission, role, name }) => {
+  // Set identity (we now know our name and role from the server)
+  userName = name;
+  userRole = role;
+  isTutor  = role === "tutor";
+
+  userNameLabel.textContent = userName;
+  userAvatar.textContent    = userName.charAt(0).toUpperCase();
+  userAvatar.classList.add(isTutor ? "role-tutor" : "role-student");
+  localLabel.textContent    = `${userName} (You)`;
+  if (isTutor) permRow.classList.add("show");
+
+  // Find the other participant for waiting screen labels
   const other = Object.values(participants).find(p => p.userId !== userId);
   if (other) {
-    waitingName.textContent       = other.name;
-    remoteNoVideoName.textContent = other.name;
-    remoteLabel.textContent       = other.name;
+    waitingName.textContent      = other.name;
+    remoteNoVidName.textContent  = other.name;
+    remoteLabel.textContent      = other.name;
   }
 
-  // Apply draw permission from server
   applyDrawPermission(drawPermission);
   if (isTutor) permToggle.checked = drawPermission;
 
-  // FIX: If the other person is ALREADY connected when we join,
-  // hide the waiting overlay immediately and show their status
-  const otherAlreadyConnected = connectedUsers.some(u => u.userId !== userId);
-  if (otherAlreadyConnected) {
-    // Don't hide overlay yet — wait for video (ontrack) to confirm
-    // But update waiting text so it doesn't say "waiting to join"
+  // If other person is already connected — trigger offer
+  const otherOnline = connectedUsers.some(u => u && u.userId !== userId);
+  if (otherOnline) {
     waitingSubtext.textContent = "Establishing video connection…";
-    // Trigger offer since they're already there
     startOffer();
   }
 });
@@ -391,163 +369,128 @@ async function startMedia() {
   try {
     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     localVideo.srcObject = localStream;
-  } catch (err) {
-    console.warn("Media access failed:", err.message);
-    showToast("⚠️ Camera/mic not available — joining without video");
+  } catch {
+    showToast("⚠️ Camera/mic unavailable — joining without video");
     localStream = new MediaStream();
   }
-  socket.emit("join-room", { roomId, userId, name: userName, role: userRole });
+  socket.emit("join-room", { roomId, userId });
 }
 
 // ─────────────────────────────────────────────
 // WebRTC
 // ─────────────────────────────────────────────
-let peerConnection  = null;
+let pc              = null;
+let remoteDescSet   = false;
+let iceCandQueue    = [];
 let isMuted         = false;
 let isVideoOff      = false;
-let iceCandidateQueue = []; // FIX: queue candidates until remote desc is set
-let remoteDescSet   = false;
 
 const iceConfig = {
   iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun.l.google.com:19302"  },
     { urls: "stun:stun1.l.google.com:19302" },
     { urls: "stun:stun2.l.google.com:19302" },
   ],
 };
 
 function createPeer() {
-  // Clean up any existing connection
-  if (peerConnection) {
-    peerConnection.close();
-    peerConnection = null;
-  }
-  remoteDescSet     = false;
-  iceCandidateQueue = [];
+  if (pc) { pc.close(); pc = null; }
+  remoteDescSet = false;
+  iceCandQueue  = [];
 
-  const pc = new RTCPeerConnection(iceConfig);
+  const conn = new RTCPeerConnection(iceConfig);
+  localStream.getTracks().forEach(t => conn.addTrack(t, localStream));
 
-  localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-
-  pc.ontrack = (e) => {
-    remoteVideo.srcObject  = e.streams[0];
-    remoteVideo.style.display = "block";
-    remoteNoVideo.style.display = "none";
+  conn.ontrack = ({ streams }) => {
+    remoteVideo.srcObject       = streams[0];
+    remoteVideo.style.display   = "block";
+    remoteNoVid.style.display   = "none";
     remoteLabel.style.display   = "block";
     remoteFsBtn.style.display   = "block";
     waitingOverlay.classList.add("hidden");
     setStatus("Connected", true);
-    showToast(`✅ ${remoteLabel.textContent} joined!`);
   };
 
-  pc.onicecandidate = (e) => {
-    if (e.candidate) socket.emit("ice-candidate", { roomId, candidate: e.candidate });
+  conn.onicecandidate = ({ candidate }) => {
+    if (candidate) socket.emit("ice-candidate", { roomId, candidate });
   };
 
-  pc.onconnectionstatechange = () => {
-    const s = pc.connectionState;
-    if (s === "connected") {
-      setStatus("Connected", true);
-    } else if (s === "connecting") {
-      setStatus("Connecting…", false, true);
-    } else if (["disconnected", "failed"].includes(s)) {
-      setStatus("Reconnecting…", false, true);
-      showToast("⚠️ Video connection dropped — retrying…");
-      // Try to restart ICE
-      setTimeout(() => {
-        if (pc.connectionState === "failed") startOffer();
-      }, 2000);
-    }
+  conn.onconnectionstatechange = () => {
+    const s = conn.connectionState;
+    if (s === "connected")   setStatus("Connected", true);
+    if (s === "connecting")  setStatus("Connecting…", false, true);
+    if (s === "failed")      { setStatus("Reconnecting…", false, true); setTimeout(startOffer, 2000); }
+    if (s === "disconnected"){ setStatus("Reconnecting…", false, true); }
   };
 
-  return pc;
+  return conn;
 }
 
 async function startOffer() {
-  peerConnection = createPeer();
+  pc = createPeer();
   try {
-    const offer = await peerConnection.createOffer();
-    await peerConnection.setLocalDescription(offer);
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
     socket.emit("offer", { roomId, offer });
-  } catch (err) {
-    console.error("createOffer failed:", err);
-  }
+  } catch (e) { console.error("[startOffer]", e); }
 }
 
-// Someone joined — we become the offerer
-socket.on("peer-joined", async ({ name, role }) => {
-  remoteLabel.textContent       = name;
-  remoteNoVideoName.textContent = name;
-  waitingName.textContent       = name;
-  waitingSubtext.textContent    = "Establishing video connection…";
-  showToast(`👋 ${name} joined the session`);
-  await startOffer();
+async function flushIceCandidates() {
+  for (const c of iceCandQueue) {
+    await pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
+  }
+  iceCandQueue = [];
+}
+
+socket.on("peer-joined", ({ name, role }) => {
+  remoteLabel.textContent      = name;
+  remoteNoVidName.textContent  = name;
+  waitingName.textContent      = name;
+  waitingSubtext.textContent   = "Establishing video connection…";
+  showToast(`👋 ${name} joined`);
+  startOffer();
 });
 
-// We receive an offer — we become the answerer
 socket.on("offer", async ({ offer }) => {
-  peerConnection = createPeer();
+  pc = createPeer();
   try {
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+    await pc.setRemoteDescription(new RTCSessionDescription(offer));
     remoteDescSet = true;
-
-    // FIX: flush queued ICE candidates
-    for (const c of iceCandidateQueue) {
-      await peerConnection.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
-    }
-    iceCandidateQueue = [];
-
-    const answer = await peerConnection.createAnswer();
-    await peerConnection.setLocalDescription(answer);
+    await flushIceCandidates();
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
     socket.emit("answer", { roomId, answer });
-  } catch (err) {
-    console.error("handle offer failed:", err);
-  }
+  } catch (e) { console.error("[offer]", e); }
 });
 
 socket.on("answer", async ({ answer }) => {
-  if (!peerConnection) return;
+  if (!pc) return;
   try {
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+    await pc.setRemoteDescription(new RTCSessionDescription(answer));
     remoteDescSet = true;
-
-    // FIX: flush queued ICE candidates
-    for (const c of iceCandidateQueue) {
-      await peerConnection.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
-    }
-    iceCandidateQueue = [];
-  } catch (err) {
-    console.error("handle answer failed:", err);
-  }
+    await flushIceCandidates();
+  } catch (e) { console.error("[answer]", e); }
 });
 
 socket.on("ice-candidate", async ({ candidate }) => {
-  if (!peerConnection) return;
-  if (!remoteDescSet) {
-    // FIX: queue candidate instead of dropping it
-    iceCandidateQueue.push(candidate);
-    return;
-  }
-  try {
-    await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-  } catch (err) {
-    console.warn("addIceCandidate failed:", err.message);
-  }
+  if (!pc) return;
+  if (!remoteDescSet) { iceCandQueue.push(candidate); return; }
+  await pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(() => {});
 });
 
 socket.on("peer-left", ({ name }) => {
-  remoteVideo.style.display   = "none";
-  remoteNoVideo.style.display = "flex";
-  remoteLabel.style.display   = "none";
-  remoteFsBtn.style.display   = "none";
+  remoteVideo.style.display  = "none";
+  remoteNoVid.style.display  = "flex";
+  remoteLabel.style.display  = "none";
+  remoteFsBtn.style.display  = "none";
   waitingOverlay.classList.remove("hidden");
-  waitingSubtext.textContent  = "to rejoin the session…";
-  setStatus("Waiting…", false);
+  waitingSubtext.textContent = "to rejoin the session…";
+  setStatus("Waiting…");
   showToast(`${name} left the session`);
 });
 
 socket.on("session-ended", ({ reason } = {}) => {
-  peerConnection?.close();
+  pc?.close();
   localStream?.getTracks().forEach(t => t.stop());
   showEnded(reason);
 });
@@ -558,48 +501,41 @@ socket.on("session-ended", ({ reason } = {}) => {
 document.getElementById("muteBtn").onclick = () => {
   isMuted = !isMuted;
   localStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
-  const btn = document.getElementById("muteBtn");
-  btn.textContent = isMuted ? "🔇" : "🎙️";
-  btn.classList.toggle("off", isMuted);
+  const b = document.getElementById("muteBtn");
+  b.textContent = isMuted ? "🔇" : "🎙️";
+  b.classList.toggle("off", isMuted);
 };
 
 document.getElementById("videoBtn").onclick = () => {
   isVideoOff = !isVideoOff;
   localStream.getVideoTracks().forEach(t => t.enabled = !isVideoOff);
-  const btn = document.getElementById("videoBtn");
-  btn.textContent = isVideoOff ? "🚫" : "📷";
-  btn.classList.toggle("off", isVideoOff);
+  const b = document.getElementById("videoBtn");
+  b.textContent = isVideoOff ? "🚫" : "📷";
+  b.classList.toggle("off", isVideoOff);
 };
 
 document.getElementById("endBtn").onclick = () => {
   if (confirm("End this session?")) {
-    peerConnection?.close();
+    pc?.close();
     localStream?.getTracks().forEach(t => t.stop());
     showEnded("You ended the session.");
   }
 };
 
-// ─────────────────────────────────────────────
-// Fullscreen buttons
-// ─────────────────────────────────────────────
-function toggleFullscreen(el) {
-  if (!document.fullscreenElement) {
-    el.requestFullscreen?.() || el.webkitRequestFullscreen?.();
-  } else {
-    document.exitFullscreen?.() || document.webkitExitFullscreen?.();
-  }
+// Fullscreen
+function toggleFs(el) {
+  if (!document.fullscreenElement) el.requestFullscreen?.() || el.webkitRequestFullscreen?.();
+  else document.exitFullscreen?.() || document.webkitExitFullscreen?.();
 }
-document.getElementById("localFsBtn").onclick  = () => toggleFullscreen(document.getElementById("localSlot"));
-document.getElementById("remoteFsBtn").onclick = () => toggleFullscreen(document.getElementById("remoteSlot"));
+document.getElementById("localFsBtn").onclick  = () => toggleFs(document.getElementById("localSlot"));
+document.getElementById("remoteFsBtn").onclick = () => toggleFs(document.getElementById("remoteSlot"));
 
-// ─────────────────────────────────────────────
-// Draw permission toggle (tutor only)
-// ─────────────────────────────────────────────
+// Draw permission toggle (tutor)
 permToggle.addEventListener("change", () => {
   socket.emit("set-draw-permission", { roomId, allowed: permToggle.checked });
 });
 
-socket.on("draw-permission-changed", ({ allowed, byName }) => {
+socket.on("draw-permission-changed", ({ allowed }) => {
   applyDrawPermission(allowed);
   if (isTutor) {
     permToggle.checked = allowed;
@@ -614,31 +550,21 @@ socket.on("draw-permission-changed", ({ allowed, byName }) => {
 // ─────────────────────────────────────────────
 const canvas = document.getElementById("whiteboard");
 const ctx    = canvas.getContext("2d");
-let drawing  = false, lastX = 0, lastY = 0;
+let drawing  = false, lx = 0, ly = 0;
 let penColor = "#ffffff", penSize = 3, isEraser = false;
-let drawIndicatorTimer = null;
-
-// FIX: save/restore board as image on resize instead of getImageData (which breaks on resize)
-let boardSnapshot = null;
+let drawIndTimer = null;
+let boardSnap = null;
 
 function resizeCanvas() {
-  // Save current drawing as image
-  if (canvas.width > 0 && canvas.height > 0) {
-    boardSnapshot = canvas.toDataURL();
-  }
+  if (canvas.width > 0 && canvas.height > 0) boardSnap = canvas.toDataURL();
   canvas.width  = canvas.offsetWidth;
   canvas.height = canvas.offsetHeight;
-
-  // Restore drawing
-  if (boardSnapshot) {
+  if (boardSnap) {
     const img = new Image();
     img.onload = () => ctx.drawImage(img, 0, 0);
-    img.src = boardSnapshot;
+    img.src = boardSnap;
   }
 }
-
-window.addEventListener("resize", resizeCanvas);
-// Use ResizeObserver for more reliable canvas resize
 new ResizeObserver(resizeCanvas).observe(canvas);
 resizeCanvas();
 
@@ -651,55 +577,43 @@ function getPos(e) {
   };
 }
 
-function drawStroke(x0, y0, x1, y1, color, size, eraser) {
+function stroke(x0, y0, x1, y1, color, size, eraser) {
   ctx.globalCompositeOperation = eraser ? "destination-out" : "source-over";
   ctx.strokeStyle = color;
   ctx.lineWidth   = size;
   ctx.lineCap = ctx.lineJoin = "round";
-  ctx.beginPath();
-  ctx.moveTo(x0, y0);
-  ctx.lineTo(x1, y1);
-  ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
 }
 
 canvas.addEventListener("pointerdown", e => {
   if (!drawAllowed) return;
   drawing = true;
-  const p = getPos(e);
-  lastX = p.x; lastY = p.y;
+  const p = getPos(e); lx = p.x; ly = p.y;
   canvas.setPointerCapture(e.pointerId);
 });
-
 canvas.addEventListener("pointermove", e => {
   if (!drawing || !drawAllowed) return;
   const { x, y } = getPos(e);
-  drawStroke(lastX, lastY, x, y, penColor, penSize, isEraser);
-  socket.emit("draw", {
-    roomId,
-    data: { x0: lastX, y0: lastY, x1: x, y1: y, color: penColor, size: penSize, eraser: isEraser },
-  });
-  lastX = x; lastY = y;
+  stroke(lx, ly, x, y, penColor, penSize, isEraser);
+  socket.emit("draw", { roomId, data: { x0: lx, y0: ly, x1: x, y1: y, color: penColor, size: penSize, eraser: isEraser } });
+  lx = x; ly = y;
 });
+canvas.addEventListener("pointerup",     () => drawing = false);
+canvas.addEventListener("pointercancel", () => drawing = false);
 
-canvas.addEventListener("pointerup",    () => { drawing = false; });
-canvas.addEventListener("pointercancel",() => { drawing = false; });
-
-// Remote draw events
 socket.on("draw", ({ x0, y0, x1, y1, color, size, eraser, senderName }) => {
-  drawStroke(x0, y0, x1, y1, color, size, eraser);
-  // Show who is drawing
-  drawingIndicator.textContent = `✏️ ${senderName || "Other"} is drawing…`;
-  drawingIndicator.classList.add("show");
-  clearTimeout(drawIndicatorTimer);
-  drawIndicatorTimer = setTimeout(() => drawingIndicator.classList.remove("show"), 1500);
+  stroke(x0, y0, x1, y1, color, size, eraser);
+  drawInd.textContent = `✏️ ${senderName || "Other"} is drawing…`;
+  drawInd.classList.add("show");
+  clearTimeout(drawIndTimer);
+  drawIndTimer = setTimeout(() => drawInd.classList.remove("show"), 1500);
 });
 
 socket.on("clear-board", () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  boardSnapshot = null;
+  boardSnap = null;
 });
 
-// Toolbar
 document.querySelectorAll(".color-swatch").forEach(el => {
   el.addEventListener("click", () => {
     if (!drawAllowed) return;
@@ -710,28 +624,23 @@ document.querySelectorAll(".color-swatch").forEach(el => {
     document.getElementById("eraserBtn").classList.remove("active");
   });
 });
-
 document.getElementById("eraserBtn").addEventListener("click", () => {
   if (!drawAllowed) return;
   isEraser = !isEraser;
   document.getElementById("eraserBtn").classList.toggle("active", isEraser);
 });
-
-document.getElementById("sizeSlider").addEventListener("input", e => {
-  penSize = parseInt(e.target.value);
-});
-
+document.getElementById("sizeSlider").addEventListener("input", e => penSize = +e.target.value);
 document.getElementById("clearBtn").addEventListener("click", () => {
   if (!drawAllowed) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  boardSnapshot = null;
+  boardSnap = null;
   socket.emit("clear-board", { roomId });
 });
 
 // ─────────────────────────────────────────────
 // Start
 // ─────────────────────────────────────────────
-applyDrawPermission(false); // default locked until server says otherwise
+applyDrawPermission(false);
 startMedia();
 </script>
 </body>

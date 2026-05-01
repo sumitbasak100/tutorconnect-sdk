@@ -1,6 +1,8 @@
 /**
- * TutorConnect SDK  v2.0
- * Self-hosted video + whiteboard with identity & tracking
+ * TutorConnect SDK  v3.0
+ * Self-hosted video + whiteboard — clean URLs, no query params
+ *
+ * Session URLs: /session/:roomId/:userId
  *
  * ── Quick start ──────────────────────────────────────────
  *
@@ -9,14 +11,14 @@
  *   const tc = new TutorConnect({ host: 'https://your-domain.com' });
  *
  *   const session = await tc.createSession({
- *     tutor:   { userId: 'teacher_1', name: 'Mr. Smith' },
- *     student: { userId: 'student_1', name: 'Alice' },
- *     metadata: { subject: 'Math', grade: '8' }
+ *     tutor:    { userId: 'teacher_1', name: 'Mr. Smith' },
+ *     student:  { userId: 'student_1', name: 'Alice' },
+ *     metadata: { subject: 'Math' }   // optional
  *   });
  *
- *   // Give each person their own join button/link
- *   tc.launch(session.tutorJoinUrl);    // tutor clicks this
- *   tc.launch(session.studentJoinUrl);  // student clicks this
+ *   // Each person gets their own URL — open it however you want
+ *   tc.launch(session.tutorJoinUrl);    // tutor
+ *   tc.launch(session.studentJoinUrl);  // student
  * </script>
  */
 
@@ -29,35 +31,28 @@
     }
 
     /**
-     * Create a new session
-     *
-     * @param {object} opts
-     * @param {object} opts.tutor   - { userId, name }
-     * @param {object} opts.student - { userId, name }
-     * @param {object} opts.metadata - optional extra data (subject, grade, etc.)
-     *
-     * @returns {Promise<{
-     *   roomId: string,
-     *   tutorJoinUrl: string,    ← open this for the tutor
-     *   studentJoinUrl: string,  ← open this for the student
-     *   embedCode: string        ← copy-paste iframe
-     * }>}
+     * Create a session
+     * @param {{ tutor: {userId, name}, student: {userId, name}, metadata?: object }} opts
+     * @returns {Promise<{ roomId, tutorJoinUrl, studentJoinUrl, embedCode }>}
      */
     async createSession({ tutor, student, metadata = {} } = {}) {
       if (!tutor?.userId || !tutor?.name)     throw new Error("tutor.userId and tutor.name are required");
       if (!student?.userId || !student?.name) throw new Error("student.userId and student.name are required");
 
       const res = await fetch(`${this.host}/api/rooms`, {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tutor, student, metadata }),
+        body:    JSON.stringify({ tutor, student, metadata }),
       });
-      if (!res.ok) throw new Error(`Failed to create session: ${res.statusText}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Request failed: ${res.status}`);
+      }
       return res.json();
     }
 
     /**
-     * Get session info (participants, status)
+     * Get session info
      */
     async getSession(roomId) {
       const res = await fetch(`${this.host}/api/rooms/${roomId}`);
@@ -66,19 +61,7 @@
     }
 
     /**
-     * Get full activity log for a session
-     * Returns array of { event, userId, name, timestamp }
-     * Events: "joined" | "left" | "drew" | "cleared_board" | "room_created" | "room_ended"
-     */
-    async getLogs(roomId) {
-      const res = await fetch(`${this.host}/api/rooms/${roomId}/logs`);
-      if (!res.ok) throw new Error("Could not get logs");
-      return res.json().then(d => d.logs);
-    }
-
-    /**
-     * Get a clean human-readable summary of the session
-     * { participants: [{ name, role, joinedAt, leftAt, drawCount }], totalDrawEvents }
+     * Get session summary (who joined, when, draw counts)
      */
     async getSummary(roomId) {
       const res = await fetch(`${this.host}/api/rooms/${roomId}/summary`);
@@ -95,30 +78,33 @@
     }
 
     /**
-     * Launch a join URL in a popup window
-     * Pass either tutorJoinUrl or studentJoinUrl from createSession()
+     * Launch a join URL in a popup
+     * @param {string} joinUrl  — tutorJoinUrl or studentJoinUrl from createSession()
      */
-    launch(joinUrl, { width = 1100, height = 700 } = {}) {
-      const left = (screen.width  - width)  / 2;
-      const top  = (screen.height - height) / 2;
-      window.open(joinUrl, "TutorConnect", `width=${width},height=${height},left=${left},top=${top},resizable=yes`);
+    launch(joinUrl, { width = 1200, height = 720 } = {}) {
+      const left = Math.max(0, (screen.width  - width)  / 2);
+      const top  = Math.max(0, (screen.height - height) / 2);
+      window.open(joinUrl, `tc_session_${Date.now()}`, `width=${width},height=${height},left=${left},top=${top},resizable=yes`);
     }
 
     /**
-     * Embed a session inside a div on your page
-     * @param {string|Element} container - CSS selector or DOM element
-     * @param {string} joinUrl - tutorJoinUrl or studentJoinUrl
+     * Embed a session inside a div
+     * @param {string|Element} container
+     * @param {string} joinUrl  — tutorJoinUrl or studentJoinUrl
      */
     embed(container, joinUrl, { height = "620px" } = {}) {
       const el = typeof container === "string" ? document.querySelector(container) : container;
       if (!el) throw new Error(`Container not found: ${container}`);
-      el.innerHTML = `
-        <iframe
-          src="${joinUrl}"
-          allow="camera;microphone;fullscreen"
-          style="width:100%;height:${height};border:none;border-radius:12px;display:block;"
-          allowfullscreen
-        ></iframe>`;
+      el.innerHTML = `<iframe src="${joinUrl}" allow="camera;microphone;fullscreen" style="width:100%;height:${height};border:none;border-radius:12px;display:block;" allowfullscreen></iframe>`;
+    }
+
+    /**
+     * Just get the join URL (for Flutter WebView / React Native)
+     * @param {string} roomId
+     * @param {string} userId
+     */
+    getJoinUrl(roomId, userId) {
+      return `${this.host}/session/${roomId}/${encodeURIComponent(userId)}`;
     }
   }
 
