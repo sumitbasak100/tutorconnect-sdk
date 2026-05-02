@@ -1,7 +1,7 @@
 {
   "name": "tutorconnect-sdk",
   "version": "2.0.0",
-  "description": "Self-hosted video + whiteboard SDK with identity and session tracking",
+  "description": "Self-hosted video + whiteboard SDK with user identity and activity tracking",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
