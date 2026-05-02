@@ -2,1181 +2,900 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>TutorConnect Session</title>
-<script src="/socket.io/socket.io.js" onerror="loadSocketIOFallback()"></script>
-<script>
-function loadSocketIOFallback(){
-  var s=document.createElement('script');
-  s.src='https://cdn.socket.io/4.7.5/socket.io.min.js';
-  document.head.appendChild(s);
-}
-</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>TutorConnect</title>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --bg:#0e0f14; --surface:#16181f; --s2:#1e2028; --border:#2a2d38;
-  --accent:#6c63ff; --green:#00d2aa; --text:#e8eaf0; --muted:#6b7280;
-  --danger:#ff4d6d; --warn:#f59e0b;
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e0f14;--surface:#16181f;--s2:#1e2028;--border:#2a2d38;
+  --accent:#6c63ff;--green:#00d2aa;--text:#e8eaf0;--muted:#6b7280;
+  --danger:#ff4d6d;--warn:#f59e0b;--hdr:48px;
 }
-html, body { height: 100%; overflow: hidden; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
-body { background: var(--bg); color: var(--text); display: flex; flex-direction: column; }
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-tap-highlight-color:transparent}
 
-/* SVG icon helper */
-.icon { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
-.icon svg { display:block; }
+/* ════════ LAYOUT ════════ */
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+.header{height:var(--hdr);min-height:var(--hdr);display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:var(--surface);border-bottom:1px solid var(--border);gap:8px;flex-shrink:0;z-index:50}
+.body{flex:1;display:flex;overflow:hidden;position:relative}
 
-/* Header */
-.hdr { height: 48px; min-height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; gap: 10px; }
-.logo { display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 600; }
-.logo-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
-@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }
-.chip { display: none; align-items: center; gap: 6px; background: var(--s2); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px 3px 6px; font-size: 12px; }
-.chip-av { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; }
-.chip-av.tutor { background: var(--accent); } .chip-av.student { background: var(--green); color: #000; }
-.role-badge { font-size: 10px; font-weight: 600; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: rgba(108,99,255,.2); color: var(--accent); }
-.role-badge.student { background: rgba(0,210,170,.15); color: var(--green); }
-.status-pill { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); padding: 3px 10px; border-radius: 20px; background: var(--s2); border: 1px solid var(--border); }
-.sdot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); transition: background .3s; flex-shrink: 0; }
-.sdot.on { background: var(--green); } .sdot.blink { background: var(--warn); animation: pulse .8s infinite; }
+/* ════════ HEADER ════════ */
+.logo{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;white-space:nowrap}
+.logo-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+.badge{display:flex;align-items:center;gap:6px;padding:3px 10px;border-radius:20px;background:var(--s2);border:1px solid var(--border);font-size:11px;white-space:nowrap}
+.av{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.av.tutor{background:var(--accent)}.av.student{background:var(--green);color:#000}
+.spill{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--muted);transition:background .3s}
+.sdot.on{background:var(--green)}.sdot.blink{background:var(--warn);animation:pulse 1s infinite}
 
-/* Layout */
-.body { display: flex; flex: 1; overflow: hidden; }
-
-/* Whiteboard */
-.wb { flex: 1; display: flex; flex-direction: column; background: #13141a; position: relative; min-width: 0; overflow: hidden; }
+/* ════════ WHITEBOARD PANEL ════════ */
+.wb{flex:1;display:flex;flex-direction:column;background:#13141a;position:relative;min-width:0;overflow:hidden}
 
 /* Toolbar */
-.tb { display: flex; align-items: center; gap: 4px; padding: 0 10px; height: 44px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; overflow-x: auto; scrollbar-width: none; }
-.tb::-webkit-scrollbar { display: none; }
-.sep { width: 1px; height: 22px; background: var(--border); flex-shrink: 0; margin: 0 2px; }
-.tbtn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--s2); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .12s; flex-shrink: 0; }
-.tbtn:hover { background: var(--border); }
-.tbtn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
-.tbtn:disabled { opacity: .3; pointer-events: none; }
-.tbtn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.cswatch { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform .12s, border-color .12s; flex-shrink: 0; }
-.cswatch:hover { transform: scale(1.2); } .cswatch.on { border-color: #fff; } .cswatch.dis { opacity: .3; pointer-events: none; }
-.szslider { -webkit-appearance: none; width: 64px; height: 3px; border-radius: 2px; background: var(--border); outline: none; cursor: pointer; flex-shrink: 0; }
-.szslider::-webkit-slider-thumb { -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%; background: var(--accent); cursor: pointer; }
-.szslider:disabled { opacity: .3; pointer-events: none; }
+.tb{display:flex;align-items:center;gap:4px;padding:0 10px;height:44px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tb::-webkit-scrollbar{display:none}
+.tbtn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:background .12s,border-color .12s;flex-shrink:0;user-select:none;-webkit-user-select:none}
+.tbtn:active,.tbtn:hover{background:var(--border)}
+.tbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.tbtn:disabled{opacity:.3;pointer-events:none}
+.sep{width:1px;height:22px;background:var(--border);flex-shrink:0;margin:0 2px}
+.cswatch{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0;transition:transform .12s}
+.cswatch:active{transform:scale(1.2)}.cswatch.on{border-color:#fff}
+.cswatch.dis{opacity:.3;pointer-events:none}
+.szslider{-webkit-appearance:none;width:64px;height:3px;border-radius:2px;background:var(--border);outline:none;cursor:pointer;flex-shrink:0}
+.szslider::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--accent);cursor:pointer}
 
-/* Page bar */
-.pgbar { display: none; align-items: center; gap: 4px; padding: 4px 10px; background: var(--s2); border-bottom: 1px solid var(--border); flex-shrink: 0; overflow-x: auto; scrollbar-width: none; }
-.pgbar::-webkit-scrollbar { display: none; }
-.ptab { padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; background: transparent; border: 1px solid var(--border); color: var(--muted); font-family: inherit; transition: all .12s; flex-shrink: 0; }
-.ptab:hover { background: var(--border); color: var(--text); } .ptab.on { background: var(--accent); border-color: var(--accent); color: #fff; }
-.padd { width: 22px; height: 22px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: inherit; font-size: 16px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all .12s; }
-.padd:hover { background: var(--border); color: var(--text); }
+/* Page tabs */
+.pages{display:flex;align-items:center;gap:4px;padding:4px 10px;background:var(--s2);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+.pages::-webkit-scrollbar{display:none}
+.ptab{padding:3px 10px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;background:transparent;border:1px solid var(--border);color:var(--muted);white-space:nowrap;flex-shrink:0;transition:all .12s}
+.ptab.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.ptab:hover:not(.on){background:var(--border)}
+.padd{width:22px;height:22px;border-radius:6px;font-size:14px;cursor:pointer;background:transparent;border:1px solid var(--border);color:var(--muted);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .12s}
+.padd:hover{background:var(--border);color:var(--text)}
 
-/* Draw banner */
-.dbanner { padding: 5px 12px; font-size: 11px; text-align: center; flex-shrink: 0; display: none; }
-.dbanner.show { display: block; }
-.dbanner.locked { background: rgba(245,158,11,.1); color: var(--warn); }
-.dbanner.open   { background: rgba(0,210,170,.1); color: var(--green); }
+/* Draw permission banner */
+.dbanner{padding:5px 12px;font-size:11px;text-align:center;flex-shrink:0;display:none}
+.dbanner.show{display:block}
+.dbanner.locked{background:rgba(245,158,11,.1);color:var(--warn)}
+.dbanner.open{background:rgba(0,210,170,.1);color:var(--green)}
 
-/* Canvas */
-.cvswrap { flex: 1; position: relative; overflow: hidden; }
-canvas#wb { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
-canvas#wb.cur-pen   { cursor: crosshair; }
-canvas#wb.cur-erase { cursor: cell; }
-canvas#wb.cur-shape { cursor: crosshair; }
-canvas#wb.cur-text  { cursor: text; }
-canvas#wb.cur-lock  { cursor: not-allowed; }
+/* Canvas wrapper */
+.cvs-wrap{flex:1;position:relative;overflow:hidden}
+canvas#wb{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block}
+canvas#wb.draw{cursor:crosshair}
+canvas#wb.move{cursor:grab}
+canvas#wb.move:active{cursor:grabbing}
+canvas#wb.nope{cursor:not-allowed}
+canvas#wb.cross{cursor:crosshair}
 
-/* Text input overlay */
-.txt-overlay { position: absolute; background: transparent; border: 1px dashed var(--accent); outline: none; color: var(--text); font-family: inherit; padding: 2px 4px; min-width: 80px; z-index: 20; display: none; resize: none; overflow: hidden; white-space: nowrap; }
+/* Draw indicator */
+.dind{position:absolute;bottom:12px;left:12px;font-size:11px;color:var(--green);background:rgba(0,210,170,.12);border:1px solid rgba(0,210,170,.25);padding:3px 10px;border-radius:20px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5}
+.dind.show{opacity:1}
 
-/* Drawing indicator */
-.dind { position: absolute; bottom: 10px; left: 10px; font-size: 11px; color: var(--green); background: rgba(0,210,170,.1); border: 1px solid rgba(0,210,170,.25); padding: 3px 10px; border-radius: 20px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 5; }
-.dind.show { opacity: 1; }
+/* Waiting overlay */
+.cover{position:absolute;inset:0;background:rgba(14,15,20,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:20;backdrop-filter:blur(6px);transition:opacity .4s}
+.cover.off{opacity:0;pointer-events:none}
+.spin{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.cov-t{font-size:13px;color:var(--muted)}.cov-n{font-size:16px;font-weight:600}
 
-/* Whiteboard fullscreen btn */
-.wbfs { position: absolute; top: 8px; right: 8px; z-index: 6; width: 28px; height: 28px; border-radius: 7px; background: rgba(0,0,0,.5); border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: .6; transition: opacity .2s; }
-.wbfs:hover { opacity: 1; }
-.wbfs svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+/* Whiteboard fullscreen button */
+.wb-fs{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:7px;background:rgba(0,0,0,.5);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;z-index:6;opacity:.7;backdrop-filter:blur(4px)}
+.wb-fs:hover{opacity:1}
 
-/* Waiting cover */
-.cover { position: absolute; inset: 0; background: rgba(14,15,20,.93); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; z-index: 10; backdrop-filter: blur(6px); transition: opacity .4s; }
-.cover.off { opacity: 0; pointer-events: none; }
-.spin { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spn .8s linear infinite; }
-@keyframes spn { to { transform: rotate(360deg); } }
-.cov-t { font-size: 13px; color: var(--muted); } .cov-n { font-size: 16px; font-weight: 600; }
+/* ════════ VIDEO PANEL ════════ */
+.vp{width:260px;flex-shrink:0;display:flex;flex-direction:column;background:var(--surface);border-left:1px solid var(--border)}
+/* On mobile, video panel becomes a strip at the bottom */
+@media(max-width:700px){
+  .body{flex-direction:column}
+  .vp{width:100%;height:160px;flex-direction:row;border-left:none;border-top:1px solid var(--border)}
+  .vstack{flex-direction:row!important}
+  .vslot{border-bottom:none!important;border-right:1px solid var(--border)}
+  .perm-row{display:none!important}
+  .controls{padding:6px 8px!important;gap:6px!important}
+  .ctrl{width:36px!important;height:36px!important;font-size:14px!important}
+  .tb{height:40px}
+  .tbtn{width:28px;height:28px;font-size:12px}
+}
+.vstack{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.vslot{flex:1;position:relative;background:#080910;overflow:hidden;border-bottom:1px solid var(--border)}
+.vslot video{width:100%;height:100%;object-fit:cover;display:block}
+.novid{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-size:12px}
+.ava{width:44px;height:44px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:20px;border:2px solid var(--border)}
+.vlbl{position:absolute;bottom:6px;left:6px;font-size:10px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:2px 7px;border-radius:4px;pointer-events:none}
+.vfs{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:5px;background:rgba(0,0,0,.55);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;opacity:0;transition:opacity .2s;backdrop-filter:blur(4px)}
+.vslot:hover .vfs{opacity:1}
+@media(hover:none){.vfs{opacity:.7}} /* always show on touch */
 
-/* Video panel */
-.vp { width: 260px; flex-shrink: 0; display: flex; flex-direction: column; background: var(--surface); border-left: 1px solid var(--border); }
-.vstack { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.vslot { flex: 1; position: relative; background: #080910; overflow: hidden; border-bottom: 1px solid var(--border); }
-.vslot video { width: 100%; height: 100%; object-fit: cover; display: block; }
-.vlbl { position: absolute; bottom: 6px; left: 6px; font-size: 10px; font-weight: 600; color: #fff; background: rgba(0,0,0,.6); padding: 2px 7px; border-radius: 4px; pointer-events: none; }
-.novid { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--muted); font-size: 12px; }
-.nav { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; color: #fff; border: 2px solid var(--border); }
-.vfsb { position: absolute; top: 5px; right: 5px; width: 26px; height: 26px; border-radius: 6px; background: rgba(0,0,0,.55); border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .2s; }
-.vslot:hover .vfsb, .vfsb:focus { opacity: 1; }
-/* Always show on touch */
-@media (hover: none) { .vfsb { opacity: .75; } }
-.vfsb svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
-
-/* Permission row */
-.permrow { display: none; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.permrow.show { display: flex; }
-.plbl { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
-.plbl svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.tog { position: relative; width: 34px; height: 19px; flex-shrink: 0; }
-.tog input { opacity: 0; width: 0; height: 0; position: absolute; }
-.togtr { position: absolute; inset: 0; background: var(--border); border-radius: 19px; cursor: pointer; transition: .25s; }
-.togtr::before { content:''; position: absolute; width: 13px; height: 13px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .25s; }
-.tog input:checked + .togtr { background: var(--green); }
-.tog input:checked + .togtr::before { transform: translateX(15px); }
+/* Draw permission toggle */
+.perm-row{padding:8px 12px;border-bottom:1px solid var(--border);display:none;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0}
+.perm-row.show{display:flex}
+.plbl{font-size:11px;color:var(--muted)}
+.tog{position:relative;width:34px;height:19px;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0;position:absolute}
+.tsl{position:absolute;inset:0;background:var(--border);border-radius:19px;cursor:pointer;transition:.25s}
+.tsl::before{content:'';position:absolute;width:13px;height:13px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.25s}
+.tog input:checked+.tsl{background:var(--green)}
+.tog input:checked+.tsl::before{transform:translateX(15px)}
 
 /* Controls */
-.ctrls { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
-.cbtn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .12s; background: var(--s2); color: var(--text); }
-.cbtn:hover { transform: scale(1.08); }
-.cbtn.off { background: rgba(255,77,109,.15); border-color: var(--danger); color: var(--danger); }
-.cbtn.end { background: var(--danger); color: #fff; border-color: var(--danger); }
-.cbtn.end:hover { background: #e0003d; }
-.cbtn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.controls{display:flex;justify-content:center;align-items:center;gap:8px;padding:10px;border-top:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+.ctrl{width:40px;height:40px;border-radius:50%;border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;background:var(--s2);color:var(--text);transition:transform .12s,background .12s;user-select:none}
+.ctrl:active{transform:scale(.93)}
+.ctrl.off{opacity:.4}
+.ctrl.end{background:var(--danger);color:#fff;border-color:var(--danger)}
 
-/* Mic level indicator on local video */
-.mic-ind { position: absolute; bottom: 6px; right: 6px; display: flex; gap: 2px; align-items: flex-end; height: 16px; }
-.mic-ind span { width: 3px; background: var(--green); border-radius: 2px; opacity: .5; transition: height .08s, opacity .08s; }
+/* ════════ TOASTS + OVERLAYS ════════ */
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--s2);border:1px solid var(--border);padding:7px 16px;border-radius:8px;font-size:12px;opacity:0;pointer-events:none;transition:all .25s;z-index:9000;max-width:300px;text-align:center;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.oscreen{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:9999;padding:24px;text-align:center}
+.oscreen.show{display:flex}
+.oico{font-size:44px}.otit{font-size:18px;font-weight:600}
+.omsg{font-size:13px;color:var(--muted);max-width:320px;line-height:1.7}
+.obtn{margin-top:6px;padding:9px 24px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:13px;font-family:inherit;font-weight:500}
 
-/* Toast */
-.toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%) translateY(12px); background: var(--s2); border: 1px solid var(--border); padding: 7px 16px; border-radius: 8px; font-size: 12px; opacity: 0; pointer-events: none; transition: all .25s; z-index: 9000; max-width: 300px; text-align: center; }
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-/* Overlay screens */
-.osc { position: fixed; inset: 0; background: var(--bg); display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px; z-index: 9999; padding: 24px; text-align: center; }
-.osc.show { display: flex; }
-.osc svg { width: 48px; height: 48px; stroke: var(--muted); fill: none; stroke-width: 1.5; stroke-linecap: round; }
-.osc h2 { font-size: 18px; font-weight: 600; }
-.osc p  { font-size: 13px; color: var(--muted); max-width: 320px; line-height: 1.7; }
-.osc button { margin-top: 6px; padding: 9px 24px; border-radius: 8px; background: var(--accent); color: #fff; border: none; cursor: pointer; font-size: 13px; font-family: inherit; font-weight: 500; }
-
-/* Confirmation dialog */
-.dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 9998; }
-.dialog-overlay.show { display: flex; }
-.dialog { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; width: 320px; display: flex; flex-direction: column; gap: 14px; }
-.dialog h3 { font-size: 15px; font-weight: 600; }
-.dialog p  { font-size: 13px; color: var(--muted); line-height: 1.6; }
-.dialog-btns { display: flex; gap: 8px; justify-content: flex-end; }
-.dialog-btns button { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--s2); color: var(--text); font-family: inherit; font-size: 13px; cursor: pointer; }
-.dialog-btns .primary { background: var(--danger); border-color: var(--danger); color: #fff; }
-.dialog-btns .primary:hover { background: #e0003d; }
-
-/* Network offline banner */
-.offline-bar { position: fixed; top: 48px; left: 0; right: 0; background: var(--danger); color: #fff; font-size: 12px; text-align: center; padding: 6px; z-index: 8000; display: none; }
-.offline-bar.show { display: block; }
-
-/* Mobile */
-@media (max-width: 680px) {
-  .body { flex-direction: column; }
-  .vp { width: 100%; height: 160px; flex-direction: row; border-left: none; border-top: 1px solid var(--border); }
-  .vstack { flex-direction: row; }
-  .vslot { border-bottom: none; border-right: 1px solid var(--border); }
-  .permrow { display: none !important; }
-  .ctrls { padding: 6px; gap: 6px; }
-  .cbtn { width: 36px; height: 36px; }
-  .cbtn svg { width: 15px; height: 15px; }
-  .vfsb { opacity: .8; }
-}
-
-/* Expiry warning */
-.expiry-warn { position: fixed; top: 56px; left: 50%; transform: translateX(-50%); background: var(--warn); color: #000; font-size: 12px; font-weight: 500; padding: 6px 16px; border-radius: 20px; z-index: 7000; display: none; }
-.expiry-warn.show { display: block; }
+/* ════════ FULLSCREEN TWEAKS ════════ */
+:fullscreen .app,:fullscreen .wb,:fullscreen .vslot{background:#000}
+:-webkit-full-screen .app,:-webkit-full-screen .wb{background:#000}
 </style>
 </head>
 <body>
+<div class="app">
 
-<!-- Header -->
-<div class="hdr">
-  <div class="logo"><div class="logo-dot"></div>TutorConnect</div>
-  <div class="chip" id="chip">
-    <div class="chip-av" id="chipAv"></div>
-    <span id="chipName">—</span>
-    <span class="role-badge" id="chipRole">—</span>
+  <!-- Header -->
+  <div class="header">
+    <div class="logo"><div class="logo-dot"></div>TutorConnect</div>
+    <div class="badge"><div class="av" id="uav"></div><span id="uname">—</span></div>
+    <div class="spill"><div class="sdot" id="sdot"></div><span id="stxt">Connecting…</span></div>
   </div>
-  <div class="status-pill"><div class="sdot" id="sdot"></div><span id="stxt">Connecting…</span></div>
-</div>
 
-<!-- Offline banner -->
-<div class="offline-bar" id="offlineBar">⚠️ No internet connection — trying to reconnect…</div>
+  <div class="body">
 
-<!-- Expiry warning -->
-<div class="expiry-warn" id="expiryWarn">⏰ Session expires in 5 minutes</div>
-
-<div class="body">
-
-  <!-- Whiteboard -->
-  <div class="wb">
-    <!-- Toolbar -->
-    <div class="tb" id="toolbar">
-      <!-- Draw tools -->
-      <button class="tbtn on" id="tPen"   title="Pen">
-        <svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-      </button>
-      <button class="tbtn" id="tLine" title="Line">
-        <svg viewBox="0 0 24 24"><line x1="5" y1="19" x2="19" y2="5"/></svg>
-      </button>
-      <button class="tbtn" id="tRect" title="Rectangle">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-      </button>
-      <button class="tbtn" id="tCirc" title="Circle">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
-      </button>
-      <button class="tbtn" id="tArrow" title="Arrow">
-        <svg viewBox="0 0 24 24"><line x1="5" y1="19" x2="19" y2="5"/><polyline points="9 5 19 5 19 15"/></svg>
-      </button>
-      <button class="tbtn" id="tText" title="Text">
-        <svg viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
-      </button>
-      <button class="tbtn" id="tErase" title="Eraser">
-        <svg viewBox="0 0 24 24"><path d="M20 20H7L3 16l13-13 6 6-5.5 5.5"/><path d="M6.5 17.5l4-4"/></svg>
-      </button>
-      <div class="sep"></div>
-      <!-- Colors -->
-      <div class="cswatch on"  style="background:#ffffff" data-c="#ffffff"></div>
-      <div class="cswatch"     style="background:#6c63ff" data-c="#6c63ff"></div>
-      <div class="cswatch"     style="background:#00d2aa" data-c="#00d2aa"></div>
-      <div class="cswatch"     style="background:#ff4d6d" data-c="#ff4d6d"></div>
-      <div class="cswatch"     style="background:#ffd166" data-c="#ffd166"></div>
-      <div class="cswatch"     style="background:#60a5fa" data-c="#60a5fa"></div>
-      <div class="sep"></div>
-      <input type="range" class="szslider" id="szSlider" min="1" max="30" value="3" title="Size"/>
-      <div class="sep"></div>
-      <button class="tbtn" id="tUndo" title="Undo">
-        <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
-      </button>
-      <button class="tbtn" id="tClear" title="Clear page" style="margin-left:auto">
-        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-      </button>
-      <button class="tbtn wbfs" id="wbFsBtn" title="Fullscreen board">
-        <svg viewBox="0 0 24 24" width="14" height="14"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
-      </button>
-    </div>
-
-    <!-- Page bar (tutor only) -->
-    <div class="pgbar" id="pgbar">
-      <div id="pgTabs"></div>
-      <button class="padd" id="pgAdd" title="New page">+</button>
-    </div>
-
-    <!-- Student draw banner -->
-    <div class="dbanner" id="dbanner"></div>
-
-    <div class="cvswrap" id="cvswrap">
-      <canvas id="wb"></canvas>
-      <!-- Inline text input (replaces prompt()) -->
-      <textarea class="txt-overlay" id="txtOverlay" rows="1" placeholder="Type here, press Enter"></textarea>
-      <div class="dind" id="dind"></div>
-      <div class="cover" id="cover">
-        <div class="spin"></div>
-        <div class="cov-t">Waiting for</div>
-        <div class="cov-n" id="covName">other participant</div>
-        <div class="cov-t" id="covSub">to join the session…</div>
+    <!-- Whiteboard -->
+    <div class="wb" id="wbPanel">
+      <!-- Toolbar -->
+      <div class="tb" id="toolbar">
+        <!-- Tools -->
+        <button class="tbtn on" id="tPen"   title="Pen">✏️</button>
+        <button class="tbtn"    id="tLine"  title="Line">╱</button>
+        <button class="tbtn"    id="tRect"  title="Rectangle">▭</button>
+        <button class="tbtn"    id="tCirc"  title="Circle">◯</button>
+        <button class="tbtn"    id="tArrow" title="Arrow">➜</button>
+        <button class="tbtn"    id="tText"  title="Text">T</button>
+        <button class="tbtn"    id="tMove"  title="Pan board">✋</button>
+        <button class="tbtn"    id="tErase" title="Eraser">⌫</button>
+        <div class="sep"></div>
+        <!-- Colors -->
+        <div class="cswatch on"  style="background:#ffffff" data-c="#ffffff"></div>
+        <div class="cswatch"     style="background:#6c63ff" data-c="#6c63ff"></div>
+        <div class="cswatch"     style="background:#00d2aa" data-c="#00d2aa"></div>
+        <div class="cswatch"     style="background:#ff4d6d" data-c="#ff4d6d"></div>
+        <div class="cswatch"     style="background:#ffd166" data-c="#ffd166"></div>
+        <div class="cswatch"     style="background:#60a5fa" data-c="#60a5fa"></div>
+        <div class="sep"></div>
+        <input type="range" class="szslider" id="szSlider" min="1" max="30" value="3" title="Size"/>
+        <div class="sep"></div>
+        <button class="tbtn" id="tUndo"  title="Undo">↩</button>
+        <button class="tbtn" id="tClear" title="Clear page">🗑</button>
+        <button class="tbtn" id="wbFsBtn" title="Fullscreen board" style="margin-left:auto">⛶</button>
       </div>
-    </div>
-  </div>
 
-  <!-- Video panel -->
-  <div class="vp">
-    <!-- Draw permission (tutor only) -->
-    <div class="permrow" id="permrow">
-      <span class="plbl">
-        <svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-        Student can draw
-      </span>
-      <label class="tog"><input type="checkbox" id="permTog"/><span class="togtr"></span></label>
-    </div>
+      <!-- Page tabs (tutor only, shown after room-state) -->
+      <div class="pages" id="pagesBar" style="display:none">
+        <div id="pageTabs"></div>
+        <button class="padd" id="addPageBtn" title="New page">+</button>
+      </div>
 
-    <div class="vstack">
-      <!-- Local -->
-      <div class="vslot" id="lslot">
-        <video id="lvid" autoplay muted playsinline></video>
-        <div class="vlbl" id="llbl">You</div>
-        <div class="mic-ind" id="micInd">
-          <span id="mb1"></span><span id="mb2"></span><span id="mb3"></span>
+      <div class="dbanner" id="dbanner"></div>
+
+      <div class="cvs-wrap" id="cvsWrap">
+        <canvas id="wb"></canvas>
+        <div class="dind" id="dind"></div>
+        <div class="cover" id="cover">
+          <div class="spin"></div>
+          <div class="cov-t">Waiting for</div>
+          <div class="cov-n" id="covName">the other participant</div>
+          <div class="cov-t" id="covSub">to join…</div>
         </div>
-        <button class="vfsb" id="lfs" title="Fullscreen">
-          <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
-        </button>
       </div>
-      <!-- Remote -->
-      <div class="vslot" id="rslot">
-        <div class="novid" id="rnovid">
-          <div class="nav" id="rav">?</div>
-          <span id="rnoname">Waiting…</span>
+    </div>
+
+    <!-- Video panel -->
+    <div class="vp">
+      <div class="perm-row" id="permRow">
+        <span class="plbl">✏️ Student can draw</span>
+        <label class="tog"><input type="checkbox" id="permTog"/><span class="tsl"></span></label>
+      </div>
+      <div class="vstack">
+        <div class="vslot" id="lslot">
+          <video id="lvid" autoplay muted playsinline></video>
+          <div class="vlbl" id="llbl">You</div>
+          <button class="vfs" id="lfs">⛶</button>
         </div>
-        <video id="rvid" autoplay playsinline style="display:none"></video>
-        <div class="vlbl" id="rlbl" style="display:none">—</div>
-        <button class="vfsb" id="rfs" title="Fullscreen" style="display:none">
-          <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
-        </button>
+        <div class="vslot" id="rslot">
+          <div class="novid" id="rnovid"><div class="ava">👤</div><span id="rnoname">Waiting…</span></div>
+          <video id="rvid" autoplay playsinline style="display:none"></video>
+          <div class="vlbl" id="rlbl" style="display:none">—</div>
+          <button class="vfs" id="rfs" style="display:none">⛶</button>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="ctrl" id="muteBtn"  title="Mute">🎙️</button>
+        <button class="ctrl" id="camBtn"   title="Camera">📷</button>
+        <button class="ctrl end" id="endBtn" title="End">📵</button>
       </div>
     </div>
 
-    <div class="ctrls">
-      <!-- Mic -->
-      <button class="cbtn" id="muteBtn" title="Mute/unmute">
-        <svg id="micSvg" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-      </button>
-      <!-- Camera -->
-      <button class="cbtn" id="camBtn" title="Camera on/off">
-        <svg id="camSvg" viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-      </button>
-      <!-- End -->
-      <button class="cbtn end" id="endBtn" title="Leave/end session">
-        <svg viewBox="0 0 24 24"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07C9.44 17.25 7.76 15.59 6.46 13.62a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 5.11 3h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L9.13 10.97"/><line x1="23" y1="1" x2="1" y2="23"/></svg>
-      </button>
-    </div>
-  </div>
-</div>
+  </div><!-- .body -->
+</div><!-- .app -->
 
-<!-- Error screen -->
-<div class="osc" id="errSc">
-  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-  <h2>Cannot join session</h2>
-  <p id="errMsg">Something went wrong.</p>
-</div>
-
-<!-- Ended screen -->
-<div class="osc" id="endSc">
-  <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-  <h2>Session ended</h2>
-  <p id="endMsg">This session has ended.</p>
-  <button onclick="safeClose()">Close</button>
-</div>
-
-<!-- End dialog -->
-<div class="dialog-overlay" id="endDialog">
-  <div class="dialog">
-    <h3 id="dlgTitle">Leave session?</h3>
-    <p id="dlgMsg">You'll leave the session. The other participant will be notified.</p>
-    <div class="dialog-btns">
-      <button onclick="closeDialog()">Cancel</button>
-      <button class="primary" id="dlgConfirm">Leave</button>
-    </div>
-  </div>
-</div>
-
+<!-- Overlays -->
+<div class="oscreen" id="errScreen"><div class="oico">🚫</div><div class="otit">Cannot join</div><div class="omsg" id="errMsg"></div></div>
+<div class="oscreen" id="endScreen"><div class="oico">✅</div><div class="otit">Session ended</div><div class="omsg" id="endMsg"></div><button class="obtn" onclick="window.close()">Close</button></div>
 <div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════════════════
-// IDENTITY — /session/:roomId/:userId
-// ══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// IDENTITY — from URL path /session/:roomId/:userId
+// ═══════════════════════════════════════════════════════
 const parts  = location.pathname.split("/").filter(Boolean);
 const ROOM   = parts[1] || "";
 const USERID = decodeURIComponent(parts[2] || "");
 if (!ROOM || !USERID) showError("Invalid session link.");
 
-// Read lobby settings saved by lobby.html
-let lobbySettings = {};
-try { lobbySettings = JSON.parse(sessionStorage.getItem("tc_lobby_settings") || "{}"); } catch(_){}
+let ME = { name: "", role: "", isTutor: false }; // filled from room-state
 
-let ME = { name:"", role:"", isTutor: false };
-let remoteUserName = "";
-
-// ══════════════════════════════════════════════════════════
-// UTILITIES
-// ══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
 let toastTmr = null;
-function showToast(msg, ms=3000) {
+function showToast(msg, ms = 3000) {
   const t = document.getElementById("toast");
   t.textContent = msg; t.classList.add("show");
-  clearTimeout(toastTmr); toastTmr = setTimeout(() => t.classList.remove("show"), ms);
+  clearTimeout(toastTmr);
+  toastTmr = setTimeout(() => t.classList.remove("show"), ms);
 }
-function showError(msg) {
-  document.getElementById("errMsg").textContent = msg;
-  document.getElementById("errSc").classList.add("show");
-}
-function showEnded(msg) {
-  document.getElementById("endMsg").textContent = msg || "Session ended.";
-  document.getElementById("endSc").classList.add("show");
-}
-function safeClose() {
-  try { window.close(); } catch(_){}
-  // If window.close() didn't work, show a message
-  setTimeout(() => { document.querySelector("#endSc p").textContent = "You can now close this tab."; }, 300);
-}
+function showError(msg) { document.getElementById("errMsg").textContent = msg; document.getElementById("errScreen").classList.add("show"); }
+function showEnded(msg) { document.getElementById("endMsg").textContent = msg || "Session ended."; document.getElementById("endScreen").classList.add("show"); }
 function setStatus(txt, on, blink) {
   document.getElementById("stxt").textContent = txt;
-  const d = document.getElementById("sdot");
-  d.className = "sdot" + (on ? " on" : blink ? " blink" : "");
+  document.getElementById("sdot").className = "sdot" + (on ? " on" : blink ? " blink" : "");
 }
-function initials(name) { return (name||"?").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2); }
-function roleColor(r) { return r==="tutor" ? "#6c63ff" : "#00d2aa"; }
 
-// Confirmation dialog
-let dlgResolve = null;
-function confirm2(title, msg, confirmLabel="Confirm") {
-  return new Promise(resolve => {
-    dlgResolve = resolve;
-    document.getElementById("dlgTitle").textContent = title;
-    document.getElementById("dlgMsg").textContent   = msg;
-    document.getElementById("dlgConfirm").textContent = confirmLabel;
-    document.getElementById("endDialog").classList.add("show");
-  });
-}
-function closeDialog(result=false) {
-  document.getElementById("endDialog").classList.remove("show");
-  if (dlgResolve) { dlgResolve(result); dlgResolve=null; }
-}
-document.getElementById("dlgConfirm").onclick = () => closeDialog(true);
-document.getElementById("endDialog").addEventListener("click", e => { if (e.target===e.currentTarget) closeDialog(false); });
-
-// ══════════════════════════════════════════════════════════
-// NETWORK DETECTION (fix #48)
-// ══════════════════════════════════════════════════════════
-window.addEventListener("offline", () => document.getElementById("offlineBar").classList.add("show"));
-window.addEventListener("online",  () => document.getElementById("offlineBar").classList.remove("show"));
-
-// ══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 // SOCKET
-// ══════════════════════════════════════════════════════════
-const socket = io({
-  reconnection:         true,
-  reconnectionAttempts: 20,
-  reconnectionDelay:    1500,
-  reconnectionDelayMax: 8000,
-});
+// ═══════════════════════════════════════════════════════
+const socket = io({ reconnection: true, reconnectionAttempts: 20, reconnectionDelay: 1500, reconnectionDelayMax: 8000 });
 
-socket.on("connect",          () => { setStatus("Connected", true); if (localStream) doJoin(); });
+socket.on("connect",          () => { setStatus("Connected", true); if (localStream) socket.emit("join-room", { roomId: ROOM, userId: USERID }); });
 socket.on("disconnect",       () => setStatus("Reconnecting…", false, true));
 socket.on("reconnect",        () => { setStatus("Connected", true); showToast("🔄 Reconnected"); });
-socket.on("reconnect_failed", () => { setStatus("Connection lost"); showToast("Connection lost — please refresh", 10000); });
-socket.on("join-error",       ({message}) => showError(message));
-socket.on("session-expiry-warning", ({minutesLeft}) => {
-  const w = document.getElementById("expiryWarn");
-  w.textContent = `⏰ Session expires in ${minutesLeft} minutes`;
-  w.classList.add("show");
-  setTimeout(() => w.classList.remove("show"), 30000);
-});
+socket.on("reconnect_failed", () => { setStatus("Connection lost"); showToast("❌ Lost connection. Please refresh.", 8000); });
+socket.on("join-error",       ({ message }) => showError(message));
 
-function doJoin() { socket.emit("join-room", { roomId: ROOM, userId: USERID }); }
+// ═══════════════════════════════════════════════════════
+// ROOM STATE — server sends after join
+// ═══════════════════════════════════════════════════════
+socket.on("room-state", ({ participants, connectedUsers, drawPermission, role, name, pages, activePage }) => {
+  ME = { name, role, isTutor: role === "tutor" };
 
-// ══════════════════════════════════════════════════════════
-// MEDIA — with lobby settings applied
-// ══════════════════════════════════════════════════════════
-let localStream = null;
-let isMuted  = lobbySettings.micMuted || false;
-let isCamOff = lobbySettings.camOff   || false;
-let audioCtx=null, analyser=null, micSrc=null, micAnimId=null;
+  // Set header identity
+  document.getElementById("uav").textContent   = name.charAt(0).toUpperCase();
+  document.getElementById("uav").classList.add(ME.isTutor ? "tutor" : "student");
+  document.getElementById("uname").textContent = name;
+  document.getElementById("llbl").textContent  = name + " (You)";
 
-async function startMedia() {
-  const camId = lobbySettings.camDeviceId;
-  const micId = lobbySettings.micDeviceId;
-
-  const videoConstraints = isCamOff ? false :
-    (camId ? { deviceId:{exact:camId}, width:{ideal:1280}, height:{ideal:720} } : { width:{ideal:1280}, height:{ideal:720} });
-  const audioConstraints = isMuted ? false :
-    (micId ? { deviceId:{exact:micId}, echoCancellation:true, noiseSuppression:true } : { echoCancellation:true, noiseSuppression:true });
-
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: audioConstraints });
-  } catch(e1) {
-    // Step down: try audio only
-    try {
-      localStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints || true });
-      showToast("No camera available — audio only");
-    } catch(e2) {
-      localStream = new MediaStream();
-      showToast("No camera or mic — whiteboard only");
-    }
-  }
-
-  document.getElementById("lvid").srcObject = localStream;
-
-  // Apply mute/cam state from lobby
-  if (isMuted)  localStream.getAudioTracks().forEach(t => t.enabled = false);
-  if (isCamOff) localStream.getVideoTracks().forEach(t => t.enabled = false);
-
-  updateMediaBtns();
-  startMicMeter();
-
-  // Apply speaker if set
-  const spkId = lobbySettings.spkDeviceId;
-  if (spkId) {
-    const rvid = document.getElementById("rvid");
-    if (rvid.setSinkId) rvid.setSinkId(spkId).catch(()=>{});
-  }
-
-  doJoin();
-}
-
-// Mic level meter on local video
-function startMicMeter() {
-  if (!localStream || isMuted) return;
-  const track = localStream.getAudioTracks()[0];
-  if (!track || track.readyState !== "live") return;
-  try {
-    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-    analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 128;
-    micSrc = audioCtx.createMediaStreamSource(localStream);
-    micSrc.connect(analyser);
-    const data = new Uint8Array(analyser.frequencyBinCount);
-    const bars = [document.getElementById("mb1"),document.getElementById("mb2"),document.getElementById("mb3")];
-    const thresholds = [10, 30, 60];
-    function tick() {
-      micAnimId = requestAnimationFrame(tick);
-      analyser.getByteFrequencyData(data);
-      const avg = data.reduce((a,b)=>a+b,0)/data.length;
-      bars.forEach((b,i) => {
-        const h = Math.min(14, avg/thresholds[i]*14);
-        b.style.height = Math.max(3, h) + "px";
-        b.style.opacity = avg > thresholds[i]*0.5 ? "1" : "0.3";
-      });
-    }
-    tick();
-  } catch(_){}
-}
-
-function stopMicMeter() {
-  if (micAnimId) { cancelAnimationFrame(micAnimId); micAnimId=null; }
-  if (audioCtx) { audioCtx.close().catch(()=>{}); audioCtx=null; }
-}
-
-function updateMediaBtns() {
-  // Mic
-  const mb = document.getElementById("muteBtn");
-  mb.classList.toggle("off", isMuted);
-  document.getElementById("micSvg").innerHTML = isMuted
-    ? `<line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>`
-    : `<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>`;
-  // Cam
-  const cb = document.getElementById("camBtn");
-  cb.classList.toggle("off", isCamOff);
-  document.getElementById("camSvg").innerHTML = isCamOff
-    ? `<line x1="1" y1="1" x2="23" y2="23"/><path d="M21 21H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3m3-3h6l2 3h4a2 2 0 0 1 2 2v9.34m-7.72-2.06A4 4 0 1 1 7.88 7.88"/>`
-    : `<path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>`;
-}
-
-// ══════════════════════════════════════════════════════════
-// IDENTITY CONFIRMED
-// ══════════════════════════════════════════════════════════
-socket.on("identity-confirmed", ({ name, role, participants, drawPermission, activePage, pageOrder, connectedPeers }) => {
-  ME = { name, role, isTutor: role==="tutor" };
-
-  // Header
-  const chip = document.getElementById("chip"); chip.style.display = "flex";
-  const av   = document.getElementById("chipAv"); av.textContent = initials(name); av.style.background = roleColor(role); av.className = `chip-av ${role}`;
-  document.getElementById("chipName").textContent = name;
-  const rb = document.getElementById("chipRole"); rb.textContent = role; if (role==="student") rb.classList.add("student");
-  document.getElementById("llbl").textContent = name + " (You)";
-
-  // Other participant
-  const other = Object.values(participants).find(p => p.userId !== USERID);
-  if (other) {
-    remoteUserName = other.name;
-    document.getElementById("covName").textContent  = other.name;
-    document.getElementById("rnoname").textContent  = other.name;
-    document.getElementById("rlbl").textContent     = other.name;
-    const ra = document.getElementById("rav"); ra.textContent = initials(other.name); ra.style.background = roleColor(other.role);
-  }
-
+  // Show draw permission toggle for tutor
   if (ME.isTutor) {
-    document.getElementById("permrow").classList.add("show");
-    document.getElementById("pgbar").style.display = "flex";
+    document.getElementById("permRow").classList.add("show");
+    document.getElementById("pagesBar").style.display = "flex";
     document.getElementById("permTog").checked = drawPermission;
   }
 
+  // Find the other participant
+  const other = Object.values(participants).find(p => p.userId !== USERID);
+  if (other) {
+    document.getElementById("covName").textContent = other.name;
+    document.getElementById("rnoname").textContent = other.name;
+    document.getElementById("rlbl").textContent    = other.name;
+  }
+
+  // Apply draw permission
   applyDrawPerm(drawPermission);
 
-  // Fetch board data via HTTP (avoids 5MB socket limit issue #29)
-  fetch(`/api/rooms/${ROOM}/board`)
-    .then(r => r.ok ? r.json() : null)
-    .then(data => {
-      if (data) WB.loadPages(data.pages, data.activePage, data.pageOrder);
-      else WB.loadPages({"1":[]}, "1", ["1"]);
-    })
-    .catch(() => WB.loadPages({"1":[]}, "1", ["1"]));
+  // Replay board state from server
+  WB.loadPages(pages, activePage);
 
-  // If other person already connected — start WebRTC
-  if (connectedPeers && connectedPeers.length > 0) {
+  // If other person is already connected — start video offer
+  const otherOnline = (connectedUsers || []).some(u => u && u.userId !== USERID);
+  if (otherOnline) {
     document.getElementById("covSub").textContent = "Establishing video connection…";
     startOffer();
   }
 });
 
-// ══════════════════════════════════════════════════════════
-// DRAW PERMISSION
-// ══════════════════════════════════════════════════════════
-function applyDrawPerm(allowed) {
-  const locked = ME.isTutor ? false : !allowed;
-  WB.setLocked(locked);
-  document.querySelectorAll(".cswatch").forEach(e => e.classList.toggle("dis", locked));
-  ["tPen","tLine","tRect","tCirc","tArrow","tText","tErase","tUndo","tClear"].forEach(id => {
-    const el = document.getElementById(id); if (el) el.disabled = locked;
-  });
-  document.getElementById("szSlider").disabled = locked;
-  if (!ME.isTutor) {
-    const b = document.getElementById("dbanner"); b.classList.add("show");
-    b.className = "dbanner show " + (allowed ? "open" : "locked");
-    b.textContent = allowed ? "✏️ You can draw on the board" : "🔒 Drawing locked — waiting for tutor";
+// ═══════════════════════════════════════════════════════
+// MEDIA — camera + mic
+// ═══════════════════════════════════════════════════════
+let localStream = null;
+
+async function startMedia() {
+  try {
+    // Try with video first
+    localStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 48000 },
+    });
+  } catch (e1) {
+    try {
+      // Fallback: audio only
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      showToast("⚠️ No camera found — audio only");
+    } catch (e2) {
+      showToast("⚠️ No camera or mic — whiteboard only");
+      localStream = new MediaStream();
+    }
   }
+  document.getElementById("lvid").srcObject = localStream;
+  socket.emit("join-room", { roomId: ROOM, userId: USERID });
 }
 
-document.getElementById("permTog").addEventListener("change", function() {
-  socket.emit("set-draw-permission", { roomId: ROOM, allowed: this.checked });
-});
-socket.on("draw-permission-changed", ({ allowed }) => {
-  applyDrawPerm(allowed);
-  if (ME.isTutor) {
-    document.getElementById("permTog").checked = allowed;
-    showToast(allowed ? "Student can now draw" : "Student drawing locked");
-  } else {
-    showToast(allowed ? "You can now draw!" : "Drawing locked by tutor");
-  }
-});
+// ═══════════════════════════════════════════════════════
+// WEBRTC — video + audio
+// Fixes:
+//  - ICE candidate queue (applied only after remote desc set)
+//  - ICE restart on connection failure
+//  - Proper audio track constraints
+// ═══════════════════════════════════════════════════════
+let pc             = null;
+let remoteDescSet  = false;
+let iceCandQueue   = [];
+let isMuted        = false;
+let isCamOff       = false;
+let offerLock      = false; // prevent duplicate offers
 
-// ══════════════════════════════════════════════════════════
-// WEBRTC — Perfect Negotiation Pattern (fixes #4, #5)
-// polite = student (rolls back on collision)
-// impolite = tutor (wins on collision)
-// ══════════════════════════════════════════════════════════
-let pc           = null;
-let makingOffer  = false;
-let ignoreOffer  = false;
-let icePending   = [];
-let remoteSet    = false;
-
-const ICE = {
+const ICE_CFG = {
   iceServers: [
-    { urls: ["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"] },
-    // Add TURN server via env or hardcode for production:
-    // { urls:"turn:your-turn-server.com:3478", username:"user", credential:"pass" }
+    { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"] },
   ],
+  // Enable ICE restart capability
+  iceTransportPolicy: "all",
   bundlePolicy: "max-bundle",
   rtcpMuxPolicy: "require",
 };
 
 function closePeer() {
-  if (pc) { try { pc.close(); } catch(_){} pc=null; }
-  makingOffer=false; ignoreOffer=false; icePending=[]; remoteSet=false;
+  if (pc) { try { pc.close(); } catch(_){} pc = null; }
+  remoteDescSet = false; iceCandQueue = []; offerLock = false;
 }
 
 function createPeer() {
   closePeer();
-  pc = new RTCPeerConnection(ICE);
+  pc = new RTCPeerConnection(ICE_CFG);
 
+  // Add all tracks
   if (localStream) localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
 
-  pc.ontrack = ({streams}) => {
-    const rv = document.getElementById("rvid");
-    rv.srcObject = streams[0];
-    rv.style.display = "block";
-    // Fix #13: autoplay unlock for iOS
-    rv.muted = true;
-    rv.play().then(() => { rv.muted = false; }).catch(() => {
-      // Some browsers need user interaction — show click-to-unmute
-      showToast("Click the remote video to enable audio");
-      rv.onclick = () => { rv.muted=false; rv.play().catch(()=>{}); rv.onclick=null; };
-    });
+  // Remote stream arrives
+  pc.ontrack = ({ streams }) => {
+    const rvid = document.getElementById("rvid");
+    rvid.srcObject = streams[0];
+    rvid.style.display = "block";
     document.getElementById("rnovid").style.display = "none";
     document.getElementById("rlbl").style.display   = "block";
     document.getElementById("rfs").style.display    = "block";
     document.getElementById("cover").classList.add("off");
     setStatus("Connected", true);
-    showToast((remoteUserName||"Participant") + " joined!");
+    // Force play (some browsers need this)
+    rvid.play().catch(() => {});
   };
 
-  pc.onicecandidate = ({candidate}) => {
+  // ICE candidates
+  pc.onicecandidate = ({ candidate }) => {
     if (candidate) socket.emit("ice-candidate", { roomId: ROOM, candidate });
   };
 
-  pc.onnegotiationneeded = async () => {
-    try {
-      makingOffer = true;
-      await pc.setLocalDescription();
-      socket.emit("offer", { roomId: ROOM, offer: pc.localDescription, polite: !ME.isTutor });
-    } catch(e) { console.warn("[negotiation]", e.message); }
-    finally { makingOffer = false; }
-  };
-
+  // Connection state
   pc.onconnectionstatechange = () => {
     const s = pc.connectionState;
-    if (s==="connected")    setStatus("Connected", true);
-    if (s==="connecting")   setStatus("Connecting…", false, true);
-    if (s==="disconnected") {
+    console.log("[WebRTC state]", s);
+    if (s === "connected")    setStatus("Connected", true);
+    if (s === "connecting")   setStatus("Connecting…", false, true);
+    if (s === "disconnected") {
       setStatus("Reconnecting…", false, true);
-      setTimeout(() => { if (pc && pc.connectionState==="disconnected") restartICE(); }, 3000);
+      // Try ICE restart after 3s
+      setTimeout(() => { if (pc && pc.connectionState === "disconnected") restartICE(); }, 3000);
     }
-    if (s==="failed") { setStatus("Reconnecting…", false, true); showToast("Video dropped — retrying…"); setTimeout(startOffer, 1500); }
+    if (s === "failed") {
+      setStatus("Reconnecting…", false, true);
+      showToast("⚠️ Video dropped — retrying…");
+      setTimeout(startOffer, 1500);
+    }
   };
 
+  // ICE state
   pc.oniceconnectionstatechange = () => {
-    if (pc.iceConnectionState==="failed") restartICE();
+    if (pc.iceConnectionState === "failed") {
+      console.warn("[ICE] failed — restarting");
+      restartICE();
+    }
   };
 
   return pc;
 }
 
+async function flushICE() {
+  const q = [...iceCandQueue]; iceCandQueue = [];
+  for (const c of q) {
+    try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch(e) { console.warn("[ICE flush]", e.message); }
+  }
+}
+
 async function startOffer() {
+  if (offerLock) return;
+  offerLock = true;
   createPeer();
-  // onnegotiationneeded fires automatically when tracks are added
+  try {
+    const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+    await pc.setLocalDescription(offer);
+    socket.emit("offer", { roomId: ROOM, offer });
+  } catch(e) { console.error("[startOffer]", e); offerLock = false; }
 }
 
 async function restartICE() {
   if (!pc) return;
   try {
-    makingOffer = true;
     const offer = await pc.createOffer({ iceRestart: true });
     await pc.setLocalDescription(offer);
-    socket.emit("offer", { roomId: ROOM, offer: pc.localDescription, polite: !ME.isTutor });
-  } catch(e) { startOffer(); }
-  finally { makingOffer = false; }
+    socket.emit("offer", { roomId: ROOM, offer });
+  } catch(e) { console.error("[restartICE]", e); startOffer(); }
 }
 
-// Perfect negotiation — handles collision
-socket.on("offer", async ({ offer, from }) => {
-  if (!pc) createPeer();
-  const politeUs = !ME.isTutor; // student is polite
-  const collision = makingOffer || pc.signalingState !== "stable";
-  ignoreOffer = !politeUs && collision;
-  if (ignoreOffer) return;
+socket.on("peer-joined", ({ name, role }) => {
+  document.getElementById("rlbl").textContent    = name;
+  document.getElementById("rnoname").textContent = name;
+  document.getElementById("covName").textContent = name;
+  document.getElementById("covSub").textContent  = "Establishing video connection…";
+  showToast(`👋 ${name} joined`);
+  startOffer();
+});
+
+socket.on("offer", async ({ offer }) => {
+  offerLock = false;
+  createPeer();
   try {
-    if (collision) await pc.setLocalDescription({ type:"rollback" });
     await pc.setRemoteDescription(new RTCSessionDescription(offer));
-    remoteSet = true;
-    // Flush queued ICE candidates
-    for (const c of icePending) await pc.addIceCandidate(new RTCIceCandidate(c)).catch(()=>{});
-    icePending = [];
-    await pc.setLocalDescription();
-    socket.emit("answer", { roomId: ROOM, answer: pc.localDescription });
-  } catch(e) { console.error("[offer]", e.message); }
+    remoteDescSet = true;
+    await flushICE();
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    socket.emit("answer", { roomId: ROOM, answer });
+  } catch(e) { console.error("[offer handler]", e); }
 });
 
 socket.on("answer", async ({ answer }) => {
-  if (!pc || ignoreOffer) return;
+  if (!pc) return;
   try {
     await pc.setRemoteDescription(new RTCSessionDescription(answer));
-    remoteSet = true;
-    for (const c of icePending) await pc.addIceCandidate(new RTCIceCandidate(c)).catch(()=>{});
-    icePending = [];
-  } catch(e) { console.error("[answer]", e.message); }
+    remoteDescSet = true;
+    await flushICE();
+  } catch(e) { console.error("[answer handler]", e); }
 });
 
 socket.on("ice-candidate", async ({ candidate }) => {
   if (!pc) return;
-  if (!remoteSet) { icePending.push(candidate); return; }
-  try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch(e) { console.warn("[ICE]", e.message); }
+  if (!remoteDescSet) { iceCandQueue.push(candidate); return; }
+  try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch(e) { console.warn("[ICE add]", e.message); }
 });
 
-socket.on("peer-joined", ({ name, role }) => {
-  remoteUserName = name;
-  document.getElementById("rlbl").textContent   = name;
-  document.getElementById("rnoname").textContent= name;
-  document.getElementById("covName").textContent = name;
-  document.getElementById("covSub").textContent  = "Establishing video connection…";
-  const ra = document.getElementById("rav"); ra.textContent=initials(name); ra.style.background=roleColor(role);
-  showToast("👋 " + name + " joined");
-  startOffer();
-});
+socket.on("ice-restart", () => { if (pc) restartICE(); });
 
 socket.on("peer-left", ({ name }) => {
-  const rv = document.getElementById("rvid");
-  rv.style.display="none"; rv.srcObject=null;
-  document.getElementById("rnovid").style.display="flex";
-  document.getElementById("rlbl").style.display ="none";
-  document.getElementById("rfs").style.display  ="none";
+  const rvid = document.getElementById("rvid");
+  rvid.style.display = "none"; rvid.srcObject = null;
+  document.getElementById("rnovid").style.display = "flex";
+  document.getElementById("rlbl").style.display   = "none";
+  document.getElementById("rfs").style.display    = "none";
   document.getElementById("cover").classList.remove("off");
-  document.getElementById("covSub").textContent  = "to rejoin the session…";
+  document.getElementById("covSub").textContent   = "to rejoin…";
   setStatus("Waiting…");
-  showToast((name||"Participant") + " left the session");
+  showToast(`${name} left`);
   closePeer();
 });
 
-socket.on("session-ended", ({reason}={}) => {
+socket.on("session-ended", ({ reason } = {}) => {
   closePeer();
-  localStream?.getTracks().forEach(t=>t.stop());
-  stopMicMeter();
+  localStream?.getTracks().forEach(t => t.stop());
   showEnded(reason);
 });
 
-// ══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 // CONTROLS
-// ══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 document.getElementById("muteBtn").onclick = () => {
   isMuted = !isMuted;
   localStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
-  updateMediaBtns();
-  if (isMuted) stopMicMeter();
-  else startMicMeter();
+  const b = document.getElementById("muteBtn");
+  b.textContent = isMuted ? "🔇" : "🎙️";
+  b.classList.toggle("off", isMuted);
 };
-
 document.getElementById("camBtn").onclick = () => {
   isCamOff = !isCamOff;
   localStream.getVideoTracks().forEach(t => t.enabled = !isCamOff);
-  updateMediaBtns();
+  const b = document.getElementById("camBtn");
+  b.textContent = isCamOff ? "🚫" : "📷";
+  b.classList.toggle("off", isCamOff);
 };
-
-// End button — distinguishes tutor vs student (fix #44)
-document.getElementById("endBtn").onclick = async () => {
-  if (ME.isTutor) {
-    const ok = await confirm2("End session for everyone?", "This will end the session for both you and the student.", "End for everyone");
-    if (!ok) return;
-    // End via API so server notifies everyone
-    fetch(`/api/rooms/${ROOM}`, { method: "DELETE" }).catch(()=>{});
-    closePeer(); localStream?.getTracks().forEach(t=>t.stop()); stopMicMeter();
-    showEnded("You ended the session.");
-  } else {
-    const ok = await confirm2("Leave session?", "You'll leave the session. The tutor will be notified.", "Leave");
-    if (!ok) return;
-    closePeer(); localStream?.getTracks().forEach(t=>t.stop()); stopMicMeter();
-    showEnded("You left the session.");
-  }
+document.getElementById("endBtn").onclick = () => {
+  if (confirm("End this session?")) { closePeer(); localStream?.getTracks().forEach(t => t.stop()); showEnded("You ended the session."); }
 };
 
 // Fullscreen
 function goFs(el) {
   try {
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-      (el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen).call(el);
-    } else {
-      (document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen).call(document);
-    }
-  } catch(_){}
+    if (!document.fullscreenElement) (el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen).call(el);
+    else (document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen).call(document);
+  } catch(e) {}
 }
 document.getElementById("lfs").onclick    = () => goFs(document.getElementById("lslot"));
 document.getElementById("rfs").onclick    = () => goFs(document.getElementById("rslot"));
-document.getElementById("wbFsBtn").onclick= () => goFs(document.getElementById("cvswrap"));
+document.getElementById("wbFsBtn").onclick= () => goFs(document.getElementById("wbPanel"));
 
-// Railway keepalive ping every 4 minutes (fix #30)
-setInterval(() => fetch("/ping").catch(()=>{}), 4 * 60 * 1000);
+// Draw permission
+document.getElementById("permTog").addEventListener("change", e => {
+  socket.emit("set-draw-permission", { roomId: ROOM, allowed: e.target.checked });
+});
+socket.on("draw-permission-changed", ({ allowed }) => {
+  applyDrawPerm(allowed);
+  if (ME.isTutor) {
+    document.getElementById("permTog").checked = allowed;
+    showToast(allowed ? "✏️ Student can draw" : "🔒 Student drawing locked");
+  } else {
+    showToast(allowed ? "✏️ You can now draw!" : "🔒 Drawing locked");
+  }
+});
 
-// ══════════════════════════════════════════════════════════
-// WHITEBOARD ENGINE — all issues fixed
-// Fix #2:  size normalized relative to canvas width (not absolute px)
-// Fix #6:  canvas buffer initialized synchronously via ResizeObserver
-// Fix #7:  board loaded only after canvas has real dimensions
-// Fix #10: try/catch around every applyCmd
-// Fix #15: no confirm() — custom dialog
-// Fix #19: no prompt() — inline textarea overlay
-// Fix #18: undo broadcasts to server so both sides sync
-// Fix #32: shape preview uses offscreen canvas not full redraw
-// Fix #49: snapURL removed entirely — redraw from commands only
-// ══════════════════════════════════════════════════════════
+function applyDrawPerm(allowed) {
+  const locked = ME.isTutor ? false : !allowed;
+  document.querySelectorAll(".cswatch").forEach(e => e.classList.toggle("dis", locked));
+  ["tPen","tLine","tRect","tCirc","tArrow","tText","tErase","tUndo","tClear"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = locked;
+  });
+  document.getElementById("szSlider").disabled = locked;
+  if (!ME.isTutor) {
+    const b = document.getElementById("dbanner");
+    b.classList.add("show");
+    b.className = "dbanner show " + (allowed ? "open" : "locked");
+    b.textContent = allowed ? "✏️ You can draw on the board" : "🔒 Drawing locked — waiting for tutor";
+  }
+  WB.setLocked(locked);
+}
+
+// ═══════════════════════════════════════════════════════
+// WHITEBOARD ENGINE
+// Full-featured: pen, line, rect, circle, arrow, text, pan, eraser
+// Normalized coordinates (0-1) for cross-device consistency
+// Server stores full command history → replayed on join/refresh
+// ═══════════════════════════════════════════════════════
 const WB = (() => {
-  const canvas  = document.getElementById("wb");
-  const ctx     = canvas.getContext("2d");
-  // Offscreen canvas for shape preview (fix #32 — no full redraw on every mousemove)
-  const offCanvas = document.createElement("canvas");
-  const offCtx    = offCanvas.getContext("2d");
+  const canvas = document.getElementById("wb");
+  const ctx    = canvas.getContext("2d");
 
-  let tool    = "pen";
-  let color   = "#ffffff";
-  let nsize   = 0.003; // NORMALIZED size (relative to canvas width) — fix #2
-  let locked  = false;
-  let drawing = false;
-  let sNX=0,sNY=0,lNX=0,lNY=0;
+  // State
+  let tool     = "pen"; // pen|line|rect|circ|arrow|text|move|erase
+  let color    = "#ffffff";
+  let size     = 3;
+  let locked   = false;
+  let drawing  = false;
+  let startX=0, startY=0, lastX=0, lastY=0;
+  let panOX=0, panOY=0, panStartX=0, panStartY=0; // pan offset
   let activePage = "1";
-  const pages = {};
-  let pageOrder = ["1"];
-  let dindTmr = null;
-  let canvasReady = false;
-  let pendingLoad = null; // board data waiting for canvas to be ready
+  const pages  = {}; // pageId → [ commands ]
+  const undoStack = {}; // pageId → [ commands ] (snapshots for undo)
+  let dindTmr  = null;
 
-  // ── Resize: use ResizeObserver, redraw from commands (fix #6, #49) ──
-  function onResize(w, h) {
-    if (!w || !h) return;
-    canvas.width    = w;
-    canvas.height   = h;
-    offCanvas.width  = w;
-    offCanvas.height = h;
-    canvasReady = true;
-    if (pendingLoad) {
-      const {p,a,o} = pendingLoad; pendingLoad=null;
-      _loadPages(p,a,o);
-    } else {
-      redraw();
-    }
+  // Snapshot canvas before each stroke for undo
+  let preStrokeSnap = null;
+
+  // ── Resize: preserve drawing via dataURL ──
+  let snapURL = null;
+  function resize() {
+    if (canvas.width > 0 && canvas.height > 0) snapURL = canvas.toDataURL();
+    canvas.width  = canvas.offsetWidth  || canvas.parentElement.offsetWidth;
+    canvas.height = canvas.offsetHeight || canvas.parentElement.offsetHeight;
+    redraw();
   }
-  new ResizeObserver(entries => {
-    const r = entries[0].contentRect;
-    onResize(Math.floor(r.width), Math.floor(r.height));
-  }).observe(canvas.parentElement);
+  new ResizeObserver(resize).observe(canvas.parentElement);
 
-  // ── Size helpers ──
-  // Stroke size is stored as a fraction of canvas width.
-  // e.g. nsize=0.003 means 0.3% of canvas width — looks same on all screens.
-  function denormSize(ns) { return Math.max(1, ns * canvas.width); }
-
-  // ── Coord helpers ──
-  function norm(px,py)   { return { nx: canvas.width?px/canvas.width:0, ny: canvas.height?py/canvas.height:0 }; }
-  function denorm(nx,ny) { return { x: nx*canvas.width, y: ny*canvas.height }; }
-  function getPos(e) {
+  // ── Coordinate helpers (normalized 0-1) ──
+  function norm(px, py) {
+    return { nx: px / canvas.width, ny: py / canvas.height };
+  }
+  function denorm(nx, ny) {
+    return { x: nx * canvas.width, y: ny * canvas.height };
+  }
+  function getEvtPos(e) {
     const r = canvas.getBoundingClientRect();
-    const s = e.touches?e.touches[0]:e;
-    return { px: s.clientX-r.left, py: s.clientY-r.top };
+    const s = e.touches ? e.touches[0] : e;
+    return {
+      x: (s.clientX - r.left),
+      y: (s.clientY - r.top),
+    };
   }
 
-  // ── Apply a single draw command with error boundary (fix #10) ──
-  function applyCmd(cmd, target=ctx) {
-    if (!cmd||!cmd.type) return;
-    try {
-      target.save();
-      target.lineCap = target.lineJoin = "round";
-      const sw = denormSize(cmd.nsize||nsize); // use stored normalized size
-      const c  = (typeof cmd.color==="string"&&cmd.color.length<20) ? cmd.color : "#fff";
+  // ── Drawing primitives ──
+  function applyCmd(cmd) {
+    ctx.save();
+    ctx.lineCap = ctx.lineJoin = "round";
+    const c = cmd.color || "#fff";
+    const w = Math.max(1, (cmd.size || 3));
 
-      if (cmd.type==="stroke") {
-        const {x:x0,y:y0}=denorm(cmd.nx0,cmd.ny0); const {x:x1,y:y1}=denorm(cmd.nx1,cmd.ny1);
-        target.globalCompositeOperation = cmd.erase?"destination-out":"source-over";
-        target.strokeStyle = cmd.erase?"rgba(0,0,0,1)":c; target.lineWidth=sw;
-        target.beginPath(); target.moveTo(x0,y0); target.lineTo(x1,y1); target.stroke();
-      } else if (cmd.type==="line") {
-        const {x:x0,y:y0}=denorm(cmd.nx0,cmd.ny0); const {x:x1,y:y1}=denorm(cmd.nx1,cmd.ny1);
-        target.globalCompositeOperation="source-over"; target.strokeStyle=c; target.lineWidth=sw;
-        target.beginPath(); target.moveTo(x0,y0); target.lineTo(x1,y1); target.stroke();
-      } else if (cmd.type==="rect") {
-        const {x:x0,y:y0}=denorm(cmd.nx0,cmd.ny0); const {x:x1,y:y1}=denorm(cmd.nx1,cmd.ny1);
-        target.globalCompositeOperation="source-over"; target.strokeStyle=c; target.lineWidth=sw;
-        target.strokeRect(x0,y0,x1-x0,y1-y0);
-      } else if (cmd.type==="circ") {
-        const {x:cx,y:cy}=denorm(cmd.ncx,cmd.ncy); const {x:rx,y:ry}=denorm(cmd.nrx,cmd.nry);
-        const rad=Math.max(1,Math.sqrt((rx-cx)**2+(ry-cy)**2));
-        target.globalCompositeOperation="source-over"; target.strokeStyle=c; target.lineWidth=sw;
-        target.beginPath(); target.arc(cx,cy,rad,0,Math.PI*2); target.stroke();
-      } else if (cmd.type==="arrow") {
-        const {x:x0,y:y0}=denorm(cmd.nx0,cmd.ny0); const {x:x1,y:y1}=denorm(cmd.nx1,cmd.ny1);
-        const angle=Math.atan2(y1-y0,x1-x0); const hs=Math.max(8,sw*4);
-        target.globalCompositeOperation="source-over"; target.strokeStyle=c; target.fillStyle=c; target.lineWidth=sw;
-        target.beginPath(); target.moveTo(x0,y0); target.lineTo(x1,y1); target.stroke();
-        target.beginPath(); target.moveTo(x1,y1);
-        target.lineTo(x1-hs*Math.cos(angle-0.4),y1-hs*Math.sin(angle-0.4));
-        target.lineTo(x1-hs*Math.cos(angle+0.4),y1-hs*Math.sin(angle+0.4));
-        target.closePath(); target.fill();
-      } else if (cmd.type==="text") {
-        const {x,y}=denorm(cmd.nx,cmd.ny);
-        const fs=Math.max(12,denormSize(cmd.nsize)*6);
-        target.globalCompositeOperation="source-over"; target.fillStyle=c;
-        target.font=`${fs}px system-ui,sans-serif`; target.fillText(cmd.text||"",x,y);
-      } else if (cmd.type==="clear") {
-        target.clearRect(0,0,target.canvas.width,target.canvas.height);
-      }
-      target.restore();
-    } catch(e) { console.warn("[applyCmd]", e.message); }
+    if (cmd.type === "stroke") {
+      const {x:x0,y:y0} = denorm(cmd.x0, cmd.y0);
+      const {x:x1,y:y1} = denorm(cmd.x1, cmd.y1);
+      if (cmd.erase) { ctx.globalCompositeOperation = "destination-out"; ctx.strokeStyle = "rgba(0,0,0,1)"; }
+      else           { ctx.globalCompositeOperation = "source-over";     ctx.strokeStyle = c; }
+      ctx.lineWidth = w;
+      ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+
+    } else if (cmd.type === "line") {
+      const {x:x0,y:y0} = denorm(cmd.x0, cmd.y0);
+      const {x:x1,y:y1} = denorm(cmd.x1, cmd.y1);
+      ctx.strokeStyle = c; ctx.lineWidth = w; ctx.globalCompositeOperation = "source-over";
+      ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+
+    } else if (cmd.type === "rect") {
+      const {x:x0,y:y0} = denorm(cmd.x0, cmd.y0);
+      const {x:x1,y:y1} = denorm(cmd.x1, cmd.y1);
+      ctx.strokeStyle = c; ctx.lineWidth = w; ctx.globalCompositeOperation = "source-over";
+      ctx.strokeRect(x0, y0, x1-x0, y1-y0);
+
+    } else if (cmd.type === "circ") {
+      const {x:cx,y:cy} = denorm(cmd.cx, cmd.cy);
+      const {x:rx,y:ry} = denorm(cmd.rx, cmd.ry);
+      const rad = Math.sqrt((rx-cx)**2 + (ry-cy)**2);
+      ctx.strokeStyle = c; ctx.lineWidth = w; ctx.globalCompositeOperation = "source-over";
+      ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI*2); ctx.stroke();
+
+    } else if (cmd.type === "arrow") {
+      const {x:x0,y:y0} = denorm(cmd.x0, cmd.y0);
+      const {x:x1,y:y1} = denorm(cmd.x1, cmd.y1);
+      ctx.strokeStyle = c; ctx.fillStyle = c; ctx.lineWidth = w; ctx.globalCompositeOperation = "source-over";
+      const angle = Math.atan2(y1-y0, x1-x0);
+      const hs    = Math.max(8, w * 4);
+      ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x1 - hs*Math.cos(angle-0.4), y1 - hs*Math.sin(angle-0.4));
+      ctx.lineTo(x1 - hs*Math.cos(angle+0.4), y1 - hs*Math.sin(angle+0.4));
+      ctx.closePath(); ctx.fill();
+
+    } else if (cmd.type === "text") {
+      const {x,y} = denorm(cmd.x, cmd.y);
+      const fs = Math.max(12, w * 5);
+      ctx.fillStyle = c; ctx.font = `${fs}px DM Sans, sans-serif`;
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillText(cmd.text || "", x, y);
+
+    } else if (cmd.type === "clear") {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    ctx.restore();
   }
 
-  // ── Redraw full page ──
+  // ── Redraw full page from stored commands ──
   function redraw() {
-    if (!canvasReady) return;
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    (pages[activePage]||[]).forEach(cmd => applyCmd(cmd));
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const cmds = pages[activePage] || [];
+    cmds.forEach(applyCmd);
   }
 
-  // ── Shape preview using offscreen canvas (fix #32) ──
-  // Offscreen canvas is kept in sync with main during strokes.
-  // For shapes: render offscreen→overlay on main during drag, commit on pointerup.
-  let offSync = false; // whether offCanvas is a clean copy of main
-  function syncOff() {
-    offCtx.clearRect(0,0,offCanvas.width,offCanvas.height);
-    offCtx.drawImage(canvas,0,0);
-    offSync = true;
-  }
-  function drawShapePreview(cmd) {
-    if (!offSync) syncOff();
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    ctx.drawImage(offCanvas,0,0);
-    applyCmd(cmd);
-  }
-
-  // ── Load pages (called after HTTP board fetch) ──
-  function loadPages(pagesData, active, order) {
-    if (!canvasReady) { pendingLoad={p:pagesData,a:active,o:order}; return; }
-    _loadPages(pagesData, active, order);
-  }
-  function _loadPages(pagesData, active, order) {
-    Object.keys(pagesData).forEach(pid => { pages[pid] = pagesData[pid]||[]; });
-    activePage = active||Object.keys(pages)[0]||"1";
-    pageOrder  = order||Object.keys(pages);
-    if (!pages[activePage]) pages[activePage]=[];
-    renderTabs();
+  // ── Pages ──
+  function loadPages(pagesData, active) {
+    Object.assign(pages, pagesData || {});
+    activePage = active || "1";
+    renderPageTabs();
     redraw();
   }
 
-  // ── Page tabs ──
-  function renderTabs() {
-    const bar=document.getElementById("pgTabs"); if(!bar) return;
-    bar.innerHTML="";
-    pageOrder.forEach(pid => {
-      const b=document.createElement("button");
-      b.className="ptab"+(pid===activePage?" on":"");
-      b.textContent="Page "+(pageOrder.indexOf(pid)+1);
-      b.onclick=()=>{ if(ME.isTutor) socket.emit("switch-page",{roomId:ROOM,pageId:pid}); };
+  function renderPageTabs() {
+    const bar = document.getElementById("pageTabs");
+    if (!bar) return;
+    bar.innerHTML = "";
+    Object.keys(pages).forEach(pid => {
+      const b = document.createElement("button");
+      b.className = "ptab" + (pid === activePage ? " on" : "");
+      b.textContent = "Page " + pid;
+      b.onclick = () => {
+        if (!ME.isTutor) return;
+        socket.emit("switch-page", { roomId: ROOM, pageId: pid });
+      };
       bar.appendChild(b);
     });
   }
 
-  socket.on("page-state",  ({activePage:ap, pageOrder:po}) => {
-    if (!pages[ap]) pages[ap]=[];
-    activePage=ap; pageOrder=po;
-    renderTabs(); redraw();
-    applyDrawPerm(ME.isTutor ? true : document.getElementById("permTog").checked);
-  });
-  socket.on("clear-page", ({pageId}) => {
-    pages[pageId]=[]; if(pageId===activePage) redraw();
-  });
-  document.getElementById("pgAdd")?.addEventListener("click", ()=>{ if(ME.isTutor) socket.emit("add-page",{roomId:ROOM}); });
+  socket.on("page-added",   ({ pageId, activePage: ap }) => { pages[pageId] = []; activePage = ap; renderPageTabs(); redraw(); });
+  socket.on("switch-page",  ({ pageId })                  => { activePage = pageId; renderPageTabs(); redraw(); });
+  socket.on("clear-page",   ({ pageId })                  => { pages[pageId] = []; if (pageId === activePage) redraw(); });
 
-  // ── Text input overlay (replaces prompt() — fix #19) ──
-  const txtOv = document.getElementById("txtOverlay");
-  let txtNX=0, txtNY=0;
-  txtOv.addEventListener("keydown", e => {
-    if (e.key==="Enter"&&!e.shiftKey) {
-      e.preventDefault();
-      const txt=txtOv.value.trim();
-      if (txt) {
-        const cmd={type:"text",nx:txtNX,ny:txtNY,text:txt,color,nsize,pageId:activePage};
-        pushSend(cmd); applyCmd(cmd);
-      }
-      txtOv.style.display="none"; txtOv.value="";
-    }
-    if (e.key==="Escape") { txtOv.style.display="none"; txtOv.value=""; }
+  // ── Add page button ──
+  document.getElementById("addPageBtn")?.addEventListener("click", () => {
+    if (!ME.isTutor) return;
+    socket.emit("add-page", { roomId: ROOM });
   });
-  txtOv.addEventListener("blur", () => { txtOv.style.display="none"; txtOv.value=""; });
+
+  // ── Shape preview overlay (drawn on top while dragging) ──
+  let previewCmd = null;
+
+  function drawPreview() {
+    redraw();
+    if (previewCmd) applyCmd(previewCmd);
+  }
 
   // ── Pointer events ──
   canvas.addEventListener("pointerdown", e => {
-    if (locked) return;
+    if (locked && tool !== "move") return;
     e.preventDefault();
     canvas.setPointerCapture(e.pointerId);
-    const {px,py}=getPos(e);
+    const {x,y} = getEvtPos(e);
 
-    if (tool==="text") {
-      const {nx,ny}=norm(px,py);
-      txtNX=nx; txtNY=ny;
-      txtOv.style.display="block";
-      txtOv.style.left = px+"px";
-      txtOv.style.top  = (py-20)+"px";
-      txtOv.focus();
+    if (tool === "move") {
+      drawing=true; panStartX=x-panOX; panStartY=y-panOY;
       return;
     }
 
-    drawing=true; offSync=false;
-    const {nx,ny}=norm(px,py);
-    sNX=nx;sNY=ny;lNX=nx;lNY=ny;
+    if (tool === "text") {
+      const txt = prompt("Enter text:");
+      if (!txt) return;
+      const {nx,ny} = norm(x,y);
+      const cmd = { type:"text", x:nx, y:ny, text:txt, color, size, pageId:activePage };
+      pushCmd(cmd); sendCmd(cmd);
+      return;
+    }
+
+    drawing = true;
+    const n = norm(x,y);
+    startX=n.nx; startY=n.ny; lastX=n.nx; lastY=n.ny;
+    preStrokeSnap = canvas.toDataURL();
   });
 
   canvas.addEventListener("pointermove", e => {
-    if (!drawing||locked) return;
+    if (!drawing) return;
     e.preventDefault();
-    const {px,py}=getPos(e);
-    const {nx,ny}=norm(px,py);
+    const {x,y} = getEvtPos(e);
 
-    if (tool==="pen"||tool==="erase") {
-      const cmd={type:"stroke",nx0:lNX,ny0:lNY,nx1:nx,ny1:ny,color,nsize,erase:tool==="erase",pageId:activePage};
-      pushSend(cmd); applyCmd(cmd);
-      lNX=nx;lNY=ny;
+    if (tool === "move") {
+      panOX = x - panStartX; panOY = y - panStartY;
+      // Note: pan is purely visual offset — for simplicity we skip pan storage
+      // (pan resets on reload, which is expected)
+      redraw(); return;
+    }
+
+    const {nx,ny} = norm(x,y);
+
+    if (tool === "pen" || tool === "erase") {
+      const cmd = { type:"stroke", x0:lastX, y0:lastY, x1:nx, y1:ny, color, size, erase: tool==="erase", pageId:activePage };
+      pushCmd(cmd); sendCmd(cmd); applyCmd(cmd);
+      lastX=nx; lastY=ny;
+
     } else {
-      drawShapePreview(makeShape(nx,ny));
+      // Shape preview
+      previewCmd = makeShapeCmd(nx, ny);
+      drawPreview();
     }
   });
 
   canvas.addEventListener("pointerup", e => {
-    if (!drawing) return; drawing=false;
-    if (tool==="pen"||tool==="erase"||tool==="text") { offSync=false; return; }
-    const {px,py}=getPos(e);
-    const {nx,ny}=norm(px,py);
-    const cmd=makeShape(nx,ny);
-    if (cmd) { pushSend(cmd); redraw(); applyCmd(cmd); }
-    offSync=false;
+    if (!drawing) return;
+    drawing = false; previewCmd = null;
+    if (tool === "move") return;
+    if (tool === "pen" || tool === "erase" || tool === "text") return;
+
+    const {x,y} = getEvtPos(e);
+    const {nx,ny} = norm(x,y);
+    const cmd = makeShapeCmd(nx, ny);
+    if (cmd) { pushCmd(cmd); sendCmd(cmd); redraw(); applyCmd(cmd); }
   });
 
-  canvas.addEventListener("pointercancel", ()=>{ drawing=false; offSync=false; });
+  canvas.addEventListener("pointercancel", () => { drawing = false; previewCmd = null; });
 
-  function makeShape(nx,ny) {
-    if (tool==="line")  return {type:"line",  nx0:sNX,ny0:sNY,nx1:nx,ny1:ny,color,nsize,pageId:activePage};
-    if (tool==="rect")  return {type:"rect",  nx0:sNX,ny0:sNY,nx1:nx,ny1:ny,color,nsize,pageId:activePage};
-    if (tool==="circ")  return {type:"circ",  ncx:sNX,ncy:sNY,nrx:nx,nry:ny,color,nsize,pageId:activePage};
-    if (tool==="arrow") return {type:"arrow", nx0:sNX,ny0:sNY,nx1:nx,ny1:ny,color,nsize,pageId:activePage};
+  function makeShapeCmd(nx, ny) {
+    if (tool === "line")  return { type:"line",  x0:startX, y0:startY, x1:nx, y1:ny, color, size, pageId:activePage };
+    if (tool === "rect")  return { type:"rect",  x0:startX, y0:startY, x1:nx, y1:ny, color, size, pageId:activePage };
+    if (tool === "circ")  return { type:"circ",  cx:startX, cy:startY, rx:nx, ry:ny, color, size, pageId:activePage };
+    if (tool === "arrow") return { type:"arrow", x0:startX, y0:startY, x1:nx, y1:ny, color, size, pageId:activePage };
     return null;
   }
 
   // ── Store + send ──
-  function pushSend(cmd) {
-    if (!pages[activePage]) pages[activePage]=[];
+  function pushCmd(cmd) {
+    if (!pages[activePage]) pages[activePage] = [];
     pages[activePage].push(cmd);
-    socket.emit("draw", { roomId: ROOM, data: cmd });
+  }
+  function sendCmd(cmd) {
+    socket.emit("draw-cmd", { roomId: ROOM, cmd });
   }
 
-  // ── Remote events ──
-  socket.on("draw", ({senderName,...data}) => {
-    const pid=data.pageId||activePage;
-    if (!pages[pid]) pages[pid]=[];
-    pages[pid].push(data);
-    if (pid===activePage) applyCmd(data);
-    document.getElementById("dind").textContent=(senderName||"Other")+" is drawing…";
+  // ── Receive remote commands ──
+  socket.on("draw-cmd", ({ senderName, ...cmd }) => {
+    const pid = cmd.pageId || activePage;
+    if (!pages[pid]) pages[pid] = [];
+    pages[pid].push(cmd);
+    if (pid === activePage) applyCmd(cmd);
+    // Show drawing indicator
+    document.getElementById("dind").textContent = `✏️ ${senderName || "Other"} is drawing…`;
     document.getElementById("dind").classList.add("show");
     clearTimeout(dindTmr);
-    dindTmr=setTimeout(()=>document.getElementById("dind").classList.remove("show"),1500);
+    dindTmr = setTimeout(() => document.getElementById("dind")?.classList.remove("show"), 1500);
   });
 
-  // ── Undo — broadcasts undo event so both sides remove last cmd (fix #18) ──
+  // ── Undo ──
   function undo() {
     if (!pages[activePage]?.length) return;
     pages[activePage].pop();
     redraw();
-    // Broadcast undo so remote side also removes last command
-    socket.emit("draw", { roomId:ROOM, data:{ type:"undo", pageId:activePage } });
+    // Note: undo is local-only (not broadcast — keeping it simple)
   }
-  socket.on("draw", ({type,pageId}) => {
-    // Handle undo from remote
-    if (type==="undo") {
-      const pid=pageId||activePage;
-      if (pages[pid]?.length) { pages[pid].pop(); if(pid===activePage) redraw(); }
-    }
-  });
 
-  // ── Tool buttons ──
-  const tmap = {tPen:"pen",tLine:"line",tRect:"rect",tCirc:"circ",tArrow:"arrow",tText:"text",tErase:"erase"};
-  Object.entries(tmap).forEach(([id,t])=>{
-    document.getElementById(id)?.addEventListener("click",()=>setTool(t));
-  });
-
+  // ── Toolbar wiring ──
   function setTool(t) {
-    tool=t;
-    Object.keys(tmap).forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.toggle("on",tmap[id]===t); });
-    canvas.className = locked ? "cur-lock" : ({pen:"cur-pen",erase:"cur-erase",text:"cur-text"}[t]||"cur-shape");
+    tool = t;
+    ["tPen","tLine","tRect","tCirc","tArrow","tText","tMove","tErase"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle("on", id === "t"+t.charAt(0).toUpperCase()+t.slice(1));
+    });
+    canvas.className = (locked && t !== "move") ? "nope" : (t === "move" ? "move" : "draw");
   }
 
-  document.getElementById("tUndo")?.addEventListener("click", undo);
-
-  document.getElementById("tClear")?.addEventListener("click", async () => {
+  document.getElementById("tPen")  ?.addEventListener("click", () => setTool("pen"));
+  document.getElementById("tLine") ?.addEventListener("click", () => setTool("line"));
+  document.getElementById("tRect") ?.addEventListener("click", () => setTool("rect"));
+  document.getElementById("tCirc") ?.addEventListener("click", () => setTool("circ"));
+  document.getElementById("tArrow")?.addEventListener("click", () => setTool("arrow"));
+  document.getElementById("tText") ?.addEventListener("click", () => setTool("text"));
+  document.getElementById("tMove") ?.addEventListener("click", () => setTool("move"));
+  document.getElementById("tErase")?.addEventListener("click", () => setTool("erase"));
+  document.getElementById("tUndo") ?.addEventListener("click", undo);
+  document.getElementById("tClear")?.addEventListener("click", () => {
     if (locked) return;
-    const ok = await confirm2("Clear this page?", "This will clear the current page for both participants.", "Clear");
-    if (!ok) return;
-    pages[activePage]=[]; redraw();
-    socket.emit("clear-page", { roomId:ROOM, pageId:activePage });
+    if (!confirm("Clear this page?")) return;
+    pages[activePage] = [];
+    redraw();
+    socket.emit("clear-page", { roomId: ROOM, pageId: activePage });
   });
 
-  document.querySelectorAll(".cswatch").forEach(el=>{
-    el.addEventListener("click",()=>{
+  document.querySelectorAll(".cswatch").forEach(el => {
+    el.addEventListener("click", () => {
       if (locked) return;
-      document.querySelectorAll(".cswatch").forEach(s=>s.classList.remove("on"));
-      el.classList.add("on"); color=el.dataset.c;
-      if (tool==="erase") setTool("pen");
+      document.querySelectorAll(".cswatch").forEach(s => s.classList.remove("on"));
+      el.classList.add("on");
+      color = el.dataset.c;
+      if (tool === "erase" || tool === "move") setTool("pen");
     });
   });
 
-  // Size slider — convert to normalized (fix #2)
-  document.getElementById("szSlider").addEventListener("input", e=>{
-    // Slider 1–30 maps to 0.001–0.03 of canvas width
-    nsize = parseInt(e.target.value) / 10000;
-  });
+  document.getElementById("szSlider")?.addEventListener("input", e => { size = +e.target.value; });
 
   return {
     loadPages,
-    setLocked(v) { locked=v; canvas.className=v?"cur-lock":"cur-pen"; },
+    setLocked(v) {
+      locked = v;
+      canvas.className = v ? "nope" : (tool === "move" ? "move" : "draw");
+    },
   };
 })();
 
-// ══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 // START
-// ══════════════════════════════════════════════════════════
-applyDrawPerm(false);
+// ═══════════════════════════════════════════════════════
+applyDrawPerm(false); // default locked until server says otherwise
 startMedia();
 </script>
 </body>
